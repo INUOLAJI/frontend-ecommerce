@@ -1,74 +1,173 @@
-import React from 'react';
-import { Container, Row, Col, Card, Form, Button, Nav, Badge } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Container, Row, Col, Card, Form, Button, Nav, Badge, Spinner, Alert } from 'react-bootstrap';
 
 const AdminSettings = () => {
+  const [profile, setProfile] = useState({
+    full_name: '',
+    email: '',
+    bio: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [alert, setAlert] = useState({ show: false, message: '', variant: '' });
+
+  // Fetch profile from Supabase on page load
+// Move fetchProfile outside useEffect so it can be reused
+const fetchProfile = async () => {
+  try {
+    setFetching(true);
+    const res = await axios.get('http://localhost:5000/api/settings/profile');
+    if (res.data) {
+      setProfile({
+        full_name: res.data.full_name || '',
+        email:     res.data.email     || '',
+        bio:       res.data.bio       || ''
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching profile:', err);
+    showAlert('Failed to load profile data.', 'danger');
+  } finally {
+    setFetching(false);
+  }
+};
+
+// Call it on page load
+useEffect(() => {
+  fetchProfile();
+}, []);
+
+// Call it again after update
+const handleUpdateProfile = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await axios.put('http://localhost:5000/api/settings/profile', profile);
+    await fetchProfile(); // ✅ re-fetches latest data from Supabase
+    showAlert('Profile updated successfully!', 'success');
+  } catch (err) {
+    console.error('Update failed:', err);
+    showAlert('Error updating profile.', 'danger');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const showAlert = (message, variant) => {
+    setAlert({ show: true, message, variant });
+    setTimeout(() => setAlert({ show: false, message: '', variant: '' }), 4000);
+  };
+
+  // Update profile
+//   const handleUpdateProfile = async (e) => {
+//   e.preventDefault();
+//   setLoading(true);
+//   try {
+//     const res = await axios.put('http://localhost:5000/api/settings/profile', profile);
+    
+//     // ✅ Update the form with the latest saved data
+//     if (res.data.data && res.data.data[0]) {
+//       setProfile({
+//         full_name: res.data.data[0].full_name || '',
+//         email:     res.data.data[0].email     || '',
+//         bio:       res.data.data[0].bio       || ''
+//       });
+//     }
+
+//     showAlert('Profile updated successfully!', 'success');
+//   } catch (err) {
+//     console.error('Update failed:', err);
+//     showAlert('Error updating profile.', 'danger');
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
   return (
     <div className="bg-dark text-white min-vh-100 py-4">
-      <Container className="content-fade-in">
+      <Container>
         <header className="mb-4">
           <h2 className="fw-bold text-info">Settings</h2>
           <p className="text-secondary">Configure your account and platform preferences</p>
         </header>
 
-        <Row>
-          {/* Settings Navigation */}
-          {/* <Col lg={3} className="mb-4">
-            <Card className="bg-secondary bg-opacity-10 border-secondary">
-              <Nav className="flex-column p-2">
-                <Nav.Link as={Link} to="/admin/settings" className="text-info bg-info bg-opacity-10 rounded mb-1">General</Nav.Link>
-                <Nav.Link as={Link} to="/admin/security" className="text-secondary mb-1">Security</Nav.Link>
-                <Nav.Link as={Link} to="/admin/notifications" className="text-secondary px-3 hover-info d-flex justify-content-between align-items-center">
-                 Notifications
-                <Badge pill bg="info" className="ms-2">2</Badge>
-                </Nav.Link>
-                <Nav.Link as={Link} to="/admin/billing" className="text-secondary">Billing</Nav.Link>
-              </Nav>
-            </Card>
-          </Col> */}
+        {alert.show && (
+          <Alert variant={alert.variant} onClose={() => setAlert({ show: false })} dismissible>
+            {alert.message}
+          </Alert>
+        )}
 
-          {/* Settings Forms */}
+        <Row>
           <Col lg={9}>
             {/* Profile Section */}
             <Card className="bg-secondary bg-opacity-10 border-secondary mb-4">
               <Card.Header className="bg-transparent border-secondary py-3">
-                <h5 className="mb-0 text-white">Admin Profile</h5>
+                <h5 className="mb-0 text-white fw-bold">Admin Profile</h5>
               </Card.Header>
               <Card.Body>
-                <Form>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <Form.Label className="small text-secondary">Full Name</Form.Label>
-                      <Form.Control type="text" defaultValue="Admin User" className="bg-dark border-secondary text-white" />
-                    </Col>
-                    <Col md={6}>
-                      <Form.Label className="small text-secondary">Email Address</Form.Label>
-                      <Form.Control type="email" defaultValue="admin@pro-ecommerce.com" className="bg-dark border-secondary text-white" />
-                    </Col>
-                  </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small text-secondary">Bio / Job Title</Form.Label>
-                    <Form.Control as="textarea" rows={2} defaultValue="Full-Stack Developer & Store Manager" className="bg-dark border-secondary text-white" />
-                  </Form.Group>
-                  <Button variant="info" className="fw-bold px-4">Update Profile</Button>
-                </Form>
+                {fetching ? (
+                  <div className="text-center py-4">
+                    <Spinner animation="border" variant="info" />
+                    <p className="text-secondary mt-2">Loading profile...</p>
+                  </div>
+                ) : (
+                  <Form onSubmit={handleUpdateProfile}>
+                    <Row className="mb-3">
+                      <Col md={6}>
+                        <Form.Label className="small text-secondary fw-bold">Full Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          className="bg-dark border-secondary text-white"
+                          value={profile.full_name}
+                          onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                          placeholder="Enter full name"
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label className="small text-secondary fw-bold">Email Address</Form.Label>
+                        <Form.Control
+                          type="email"
+                          className="bg-dark border-secondary text-white"
+                          value={profile.email}
+                          onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                          placeholder="Enter email"
+                        />
+                      </Col>
+                    </Row>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="small text-secondary fw-bold">Bio / Job Title</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        className="bg-dark border-secondary text-white"
+                        value={profile.bio}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                        placeholder="Enter bio or job title"
+                      />
+                    </Form.Group>
+                    <Button variant="info" type="submit" className="fw-bold px-4" disabled={loading}>
+                      {loading ? <><Spinner size="sm" className="me-2" />Updating...</> : 'Update Profile'}
+                    </Button>
+                  </Form>
+                )}
               </Card.Body>
             </Card>
 
-            {/* Store Configuration */}
+            {/* Store Preferences */}
             <Card className="bg-secondary bg-opacity-10 border-secondary">
               <Card.Header className="bg-transparent border-secondary py-3">
-                <h5 className="mb-0 text-white">Store Preferences</h5>
+                <h5 className="mb-0 text-white fw-bold">Store Preferences</h5>
               </Card.Header>
               <Card.Body>
                 <Form>
                   <Form.Group className="mb-3">
-                    <Form.Label className="small text-secondary">Store Name</Form.Label>
+                    <Form.Label className="small text-secondary fw-bold">Store Name</Form.Label>
                     <Form.Control type="text" defaultValue="My Digital Shop" className="bg-dark border-secondary text-white" />
                   </Form.Group>
                   <Row className="mb-4">
                     <Col md={6}>
-                      <Form.Label className="small text-secondary">Currency</Form.Label>
+                      <Form.Label className="small text-secondary fw-bold">Currency</Form.Label>
                       <Form.Select className="bg-dark border-secondary text-white">
                         <option>USD ($)</option>
                         <option>EUR (€)</option>
@@ -77,7 +176,7 @@ const AdminSettings = () => {
                       </Form.Select>
                     </Col>
                     <Col md={6}>
-                      <Form.Label className="small text-secondary">Timezone</Form.Label>
+                      <Form.Label className="small text-secondary fw-bold">Timezone</Form.Label>
                       <Form.Select className="bg-dark border-secondary text-white">
                         <option>GMT+1 (Lagos)</option>
                         <option>UTC (London)</option>
@@ -85,11 +184,10 @@ const AdminSettings = () => {
                       </Form.Select>
                     </Col>
                   </Row>
-                  
                   <div className="border-top border-secondary pt-4 d-flex justify-content-between align-items-center">
                     <div>
-                      <h6 className="mb-0 text-white">Maintenance Mode</h6>
-                      <p className="small text-secondary mb-0 text-white">Hide the storefront while you make changes</p>
+                      <h6 className="mb-0 text-white fw-bold">Maintenance Mode</h6>
+                      <p className="small text-secondary mb-0">Hide the storefront while you make changes</p>
                     </div>
                     <Form.Check type="switch" id="maintenance-switch" />
                   </div>

@@ -1,149 +1,132 @@
-import React from 'react';
-import { Container, Row, Col, Card, Button, Table, Badge, ProgressBar } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Container, Row, Col, Card, Button, Badge, Spinner } from 'react-bootstrap';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // Import it as a function
 
 const AdminBilling = () => {
-  const invoices = [
-    { id: "INV-001", date: "Oct 01, 2023", amount: "$49.00", status: "Paid", method: "Visa **** 4242" },
-    { id: "INV-002", date: "Sep 01, 2023", amount: "$49.00", status: "Paid", method: "Visa **** 4242" },
-    { id: "INV-003", date: "Aug 01, 2023", amount: "$49.00", status: "Paid", method: "Visa **** 4242" },
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/billing/invoices');
+        setInvoices(res.data);
+      } catch (err) {
+        console.error("Error fetching invoices:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInvoices();
+  }, []);
+
+  // --- PDF GENERATOR FUNCTION ---
+  const downloadPDF = (invoice) => {
+    const doc = new jsPDF();
+
+    // Add Logo / Brand
+    doc.setFontSize(22);
+    doc.setTextColor(13, 202, 240); // Your Info Color
+    doc.text("PRO-SHOP", 14, 20);
+
+    // Add Invoice Metadata
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Invoice Number: ${invoice.id}`, 14, 30);
+    doc.text(`Date: ${invoice.date}`, 14, 37);
+    doc.text(`Status: PAID`, 14, 44);
+
+    // Table Header
+    const tableColumn = ["Description", "Quantity", "Price", "Total"];
+    const tableRows = [
+    ["Store Purchase", "1", invoice.amount, invoice.amount]
   ];
+
+    // Since we are mocking items for the demo, let's add a row
+    // In a real app, you'd pass order.items into this function
+    const rowData = [
+      "Store Purchase",
+      "1",
+      invoice.amount,
+      invoice.amount
+    ];
+    tableRows.push(rowData);
+
+    // Generate Table
+   autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 55,
+    theme: 'grid',
+    headStyles: { fillColor: [13, 202, 240] },
+  });
+
+    // Final Total
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text(`Total Amount: ${invoice.amount}`, 14, finalY);
+
+    // Footer
+    doc.setFontSize(14);
+    doc.setTextColor(150);
+    // doc.text("Thank you for your business!", 14, finalY + 20);
+    doc.text(`Total Amount: ${invoice.amount}`, 14, finalY);
+    doc.text("Thank you for your Patronage!", 14, finalY + 15);
+
+    // Download the file
+    doc.save(`${invoice.id}.pdf`);
+  };
+
+  if (loading) return (
+    <div className="bg-dark text-white min-vh-100 d-flex justify-content-center align-items-center">
+      <Spinner animation="border" variant="info" />
+    </div>
+  );
 
   return (
     <div className="bg-dark text-white min-vh-100 py-4">
-      <Container className="content-fade-in">
+      <Container>
         <header className="mb-4">
-          <h2 className="fw-bold text-info">Billing & Subscription</h2>
-          <p className="text-secondary">Manage your plan, payment methods, and invoices</p>
+          <h2 className="fw-bold text-info">Billing & Invoices</h2>
+          <p className="text-secondary">Connected to live order history</p>
         </header>
 
-        <Row className="g-4">
-          {/* Plan Overview */}
-          <Col lg={8}>
-            <Card className="bg-secondary bg-opacity-10 border-secondary mb-4 shadow-sm">
-              <Card.Body className="p-4">
-                <div className="d-flex justify-content-between align-items-start mb-4">
-                  <div>
-                    <Badge bg="info" className="mb-2 text-dark fw-bold">PRO PLAN</Badge>
-                    <h3 className="fw-bold text-white">$49.00 <span className="fs-6 text-secondary fw-normal">/ month</span></h3>
-                  </div>
-                  <Button variant="outline-info" size="sm">Change Plan</Button>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="d-flex justify-content-between small mb-1 text-white">
-                    <span>Storage Usage</span>
-                    <span>7.5 GB of 10 GB</span>
-                  </div>
-                  <ProgressBar variant="info" now={75} style={{ height: '8px' }} className="bg-dark" />
-                </div>
-
-                <p className="small text-secondary mb-0">Your next billing date is <strong>November 1st, 2023</strong>.</p>
-              </Card.Body>
-            </Card>
-
-            {/* Invoices Table */}
-           <Card className="bg-secondary bg-opacity-10 border-secondary border-0 border-md-1 text-white">
-  <Card.Header className="bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center">
-    <h5 className="mb-0 text-white">Invoice History</h5>
-  </Card.Header>
-
-  {/* Desktop Header: Hidden on mobile */}
-  <div className="d-none d-md-block bg-dark py-3 px-4 border-bottom border-secondary">
-    <Row className="text-secondary small fw-bold text-uppercase" style={{ fontSize: '18px' }}>
-      <Col md={2}>Invoice ID</Col>
-      <Col md={3}>Date</Col>
-      <Col md={2}>Amount</Col>
-      <Col md={3}>Status</Col>
-      <Col md={2} className="text-end">Download</Col>
-    </Row>
-  </div>
-
-  {/* Invoice Body / Stacked Cards */}
-  <div className="admin-list">
-    {invoices.map((inv) => (
-      <div 
-        key={inv.id} 
-        className="p-4 p-md-3 mb-3 mb-md-0 bg-secondary bg-opacity-10 border border-secondary rounded transition-all hover-lift-sm"
-      >
-        <Row className="align-items-center gy-4 g-md-0" style={{ fontSize: 'calc(14px + (18 - 14) * ((100vw - 320px) / (1200 - 320)))' }}>
-          
-          {/* Invoice ID */}
-          <Col xs={12} md={2}>
-            <div className="d-flex flex-column">
-              <span className="small text-secondary d-md-none">Invoice ID</span>
-              <span className="fw-bold text-info">{inv.id}</span>
-            </div>
-          </Col>
-
-          {/* Date */}
-          <Col xs={6} md={3}>
-            <div className="d-md-none small text-secondary mb-1">Date</div>
-            <div className="text-white">{inv.date}</div>
-          </Col>
-
-          {/* Amount */}
-          <Col xs={6} md={2}>
-            <div className="d-md-none small text-secondary mb-1">Amount</div>
-            <div className="fw-bold text-white">{inv.amount}</div>
-          </Col>
-
-          {/* Status */}
-          <Col xs={6} md={3}>
-            <div className="d-md-none small text-secondary mb-1">Status</div>
-            <Badge 
-              bg="success" 
-              className="bg-opacity-10 px-3 py-2 text-success border border-success"
-              style={{ fontSize: '0.75rem' }}
-            >
-              Paid
-            </Badge>
-          </Col>
-
-          {/* Download Action */}
-          <Col xs={6} md={2} className="text-end">
-            <div className="d-md-none small text-secondary mb-1 text-end">Action</div>
-            <Button 
-              variant="outline-info" 
-              size="sm" 
-              className="px-3"
-            >
-              PDF
-            </Button>
-          </Col>
-        </Row>
-      </div>
-    ))}
-  </div>
-</Card>
-          </Col>
-
-          {/* Payment Method */}
-          <Col lg={4}>
-            <Card className="bg-secondary bg-opacity-10 border-secondary mb-4">
-              <Card.Header className="bg-transparent border-secondary py-3">
-                <h5 className="mb-0 text-white">Payment Method</h5>
-              </Card.Header>
-              <Card.Body>
-                <div className="d-flex align-items-center mb-3 p-3 bg-dark rounded border border-secondary">
-                  <div className="fs-2 me-3">💳</div>
-                  <div>
-                    <div className="fw-bold text-white">Visa Ending in 4242</div>
-                    <div className="small text-secondary">Expires 12/26</div>
-                  </div>
-                </div>
-                <Button variant="outline-light" size="sm" className="w-100 border-secondary">Update Card</Button>
-              </Card.Body>
-            </Card>
-
-            <Card className="bg-info bg-opacity-10 border-info border-opacity-25 text-white">
-              <Card.Body>
-                <h6>Need help?</h6>
-                <p className="small text-secondary">Contact our billing support if you have questions regarding your invoices.</p>
-                <Button variant="info" size="sm" className="w-100 fw-bold">Contact Support</Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+        <Card className="bg-secondary bg-opacity-10 border-secondary text-white">
+          <Card.Header className="bg-transparent border-secondary py-3">
+            <h5 className="mb-0">Invoice History</h5>
+          </Card.Header>
+          <div className="admin-list p-3">
+            {invoices.map((inv) => (
+              <div key={inv.id} className="p-3 mb-2 bg-dark rounded border border-secondary">
+                <Row className="align-items-center">
+                  <Col md={2} className="fw-bold text-info">{inv.id}</Col>
+                  <Col md={3}>{inv.date}</Col>
+                  <Col md={2} className="fw-bold">{inv.amount}</Col>
+                  <Col md={3}>
+                    <Badge bg="success" className="bg-opacity-10 text-success border border-success">
+                      {inv.status}
+                    </Badge>
+                  </Col>
+                  <Col md={2} className="text-end">
+                    <Button 
+                      variant="outline-info" 
+                      size="sm" 
+                      onClick={() => downloadPDF(inv)}
+                    >
+                      Download PDF
+                    </Button>
+                  </Col>
+                </Row>
+              </div>
+            ))}
+            {invoices.length === 0 && (
+                <div className="text-center p-4 text-secondary">No finalized orders found yet.</div>
+            )}
+          </div>
+        </Card>
       </Container>
     </div>
   );
