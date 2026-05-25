@@ -192,9 +192,9 @@ const AdminCustomers = () => {
 
                   <Col xs={12} md={2} className="text-md-end mt-2 mt-md-0">
                     <div className="d-flex gap-2 justify-content-md-end">
-                      <Button variant="outline-light" size="sm" className="border-secondary px-3">
+                      {/* <Button variant="outline-light" size="sm" className="border-secondary px-3">
                         Details
-                      </Button>
+                      </Button> */}
                       <Button
                         variant="outline-info"
                         size="sm"
