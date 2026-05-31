@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Form, InputGroup, Badge, Spinner, Modal, Alert } from 'react-bootstrap';
-import { createClient } from '@supabase/supabase-js';
+import supabase from '../lib/supabase';
 
 // ── SINGLE SUPABASE INSTANCE (module-level singleton) ──────────────────────
 // Defined once here so it is never recreated on re-renders.
 // If you already have a src/lib/supabase.js file, delete these two lines
 // and import from there instead:  import { supabase } from '../lib/supabase';
-const SUPABASE_URL  = 'https://mtkecdfrvpbphdjciyht.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VjZGZydnBicGhkamNpeWh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzY4MDAsImV4cCI6MjA5NDk1MjgwMH0.oQeiGQO8CFYs_Wh3Yr6FU23_vZkrRSV6fLtUL_yoh3k';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
 const AdminProducts = () => {
   const [products, setProducts]           = useState([]);
