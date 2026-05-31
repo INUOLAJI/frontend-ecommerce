@@ -34,7 +34,7 @@ const CheckoutPage = () => {
 
   try {
     // 2. Save to your Supabase Database first
-    await axios.post('http://localhost:5000/api/orders', orderData);
+    await axios.post('https://backend-ecommerce-i0mn.onrender.com/api/orders', orderData);
 
     // 3. Construct the WhatsApp Message
     const phoneNumber = "1234567890"; // 👈 REPLACE WITH YOUR PHONE NUMBER (include country code, no + or 00)
