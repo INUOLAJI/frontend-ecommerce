@@ -11,7 +11,7 @@ const AdminBilling = () => {
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/billing/invoices');
+        const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/billing/invoices');
         setInvoices(res.data);
       } catch (err) {
         console.error("Error fetching invoices:", err);

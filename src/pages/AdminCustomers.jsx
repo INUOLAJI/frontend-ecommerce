@@ -12,8 +12,8 @@ const AdminCustomers = () => {
     try {
       setLoading(true);
       const [custRes, orderRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/customers'),
-        axios.get('http://localhost:5000/api/orders')
+        axios.get('https://backend-ecommerce-i0mn.onrender.com/api/customers'),
+        axios.get('https://backend-ecommerce-i0mn.onrender.com/api/orders')
       ]);
       setCustomers(custRes.data);
       setOrders(orderRes.data);

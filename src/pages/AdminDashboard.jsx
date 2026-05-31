@@ -12,7 +12,7 @@ const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/dashboard/stats')
+    axios.get('https://backend-ecommerce-i0mn.onrender.com/api/dashboard/stats')
       .then(res => {
         setData({
           stats: res.data.stats || [],

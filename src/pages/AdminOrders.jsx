@@ -12,7 +12,7 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/orders');
+      const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/orders');
       setOrders(res.data);
     } catch (err) {
       console.error("Order fetch error:", err);
@@ -28,7 +28,7 @@ const AdminOrders = () => {
   // 2. NEW: Handle Status Update
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/${orderId}/status`, {
+      await axios.put(`https://backend-ecommerce-i0mn.onrender.com/api/orders/${orderId}/status`, {
         status: newStatus
       });
       // Update local state so we don't have to fetch everything again

@@ -34,7 +34,7 @@ const AdminProducts = () => {
   // ── FETCH PRODUCTS ─────────────────────────────────────────────────────────
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/products');
+      const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/products');
       setProducts(res.data);
     } catch (err) {
       console.error('Error loading products:', err);
@@ -97,7 +97,7 @@ const AdminProducts = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await axios.post('http://localhost:5000/api/products', newProduct);
+      await axios.post('https://backend-ecommerce-i0mn.onrender.com/api/products', newProduct);
       setShowAddModal(false);
       setNewProduct({ name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
       fetchProducts();
@@ -112,7 +112,7 @@ const AdminProducts = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await axios.put(`http://localhost:5000/api/products/${editProduct.id}`, editProduct);
+      await axios.put(`https://backend-ecommerce-i0mn.onrender.com/api/products/${editProduct.id}`, editProduct);
       setShowEditModal(false);
       fetchProducts();
       showAlertMsg('Product updated successfully!', 'success');
@@ -125,7 +125,7 @@ const AdminProducts = () => {
   const handleDeleteProduct = async () => {
     setDeleting(true);
     try {
-      await axios.delete(`http://localhost:5000/api/products/${deleteProduct.id}`);
+      await axios.delete(`https://backend-ecommerce-i0mn.onrender.com/api/products/${deleteProduct.id}`);
       setShowDeleteModal(false);
       fetchProducts();
       showAlertMsg('Product deleted successfully!', 'success');

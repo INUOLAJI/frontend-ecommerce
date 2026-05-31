@@ -10,7 +10,7 @@ const AdminNotifications = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/notifications');
+        const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/notifications');
         setNotifications(res.data);
       } catch (err) {
         console.error("Failed to load notifications", err);
@@ -24,7 +24,7 @@ const AdminNotifications = () => {
   // 2. Mark a single notification as read
   const handleMarkAsRead = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`);
+      await axios.put(`https://backend-ecommerce-i0mn.onrender.com/api/notifications/${id}/read`);
       // Update local state to reflect change
       setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
     } catch (err) {
@@ -35,7 +35,7 @@ const AdminNotifications = () => {
   // 3. Mark all as read
   const handleMarkAllRead = async () => {
     try {
-      await axios.put('http://localhost:5000/api/notifications/read-all');
+      await axios.put('https://backend-ecommerce-i0mn.onrender.com/api/notifications/read-all');
       setNotifications(notifications.map(n => ({ ...n, unread: false })));
     } catch (err) {
       console.error("Error updating all notifications", err);

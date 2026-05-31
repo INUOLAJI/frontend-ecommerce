@@ -15,7 +15,7 @@ const CustomerHome = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/products');
+        const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/products');
         setProducts(res.data);
         setFilteredProducts(res.data);
       } catch (err) {

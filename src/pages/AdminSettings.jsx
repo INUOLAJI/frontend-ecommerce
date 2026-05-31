@@ -17,7 +17,7 @@ const AdminSettings = () => {
 const fetchProfile = async () => {
   try {
     setFetching(true);
-    const res = await axios.get('http://localhost:5000/api/settings/profile');
+    const res = await axios.get('https://backend-ecommerce-i0mn.onrender.com/api/settings/profile');
     if (res.data) {
       setProfile({
         full_name: res.data.full_name || '',
@@ -43,7 +43,7 @@ const handleUpdateProfile = async (e) => {
   e.preventDefault();
   setLoading(true);
   try {
-    await axios.put('http://localhost:5000/api/settings/profile', profile);
+    await axios.put('https://backend-ecommerce-i0mn.onrender.com/api/settings/profile', profile);
     await fetchProfile(); // ✅ re-fetches latest data from Supabase
     showAlert('Profile updated successfully!', 'success');
   } catch (err) {
