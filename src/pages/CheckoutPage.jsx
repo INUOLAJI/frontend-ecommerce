@@ -39,7 +39,7 @@ const CheckoutPage = () => {
     // 3. Construct the WhatsApp Message
     const phoneNumber = "1234567890"; // 👈 REPLACE WITH YOUR PHONE NUMBER (include country code, no + or 00)
     
-    let message = `*NEW ORDER - PRO-SHOP*%0A%0A`;
+    let message = `*NEW ORDER - MARVELOUS-STORE*%0A%0A`;
     message += `*Customer:* ${formData.name}%0A`;
     message += `*Email:* ${formData.email}%0A`;
     message += `*Address:* ${orderData.address}%0A%0A`;
