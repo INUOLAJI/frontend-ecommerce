@@ -48,7 +48,7 @@ const AdminDashboard = () => {
           <header className="d-flex justify-content-between align-items-center mb-5">
             <div>
               <h2 className="fw-bold text-info">Overview</h2>
-              <p className="text-secondary">Welcome back, Admin.</p>
+              <p className="text-white">Welcome back, Admin.</p>
             </div>
           </header>
 
@@ -57,7 +57,7 @@ const AdminDashboard = () => {
               <Col md={4} key={index}>
                 <Card className="bg-secondary bg-opacity-10 border-secondary hover-lift h-100">
                   <Card.Body>
-                    <h6 className="text-secondary text-uppercase small">{stat.title}</h6>
+                    <h6 className="text-white text-uppercase small">{stat.title}</h6>
                     <h3 className={`fw-bold ${stat.color} `}>{stat.value}</h3>
                     <span className="small text-white-50">{stat.growth} from last month</span>
                   </Card.Body>
@@ -132,19 +132,19 @@ const AdminDashboard = () => {
           {selectedOrder && (
             <div className="p-2">
               <div className="mb-3">
-                <label className="text-secondary small d-block">ORDER ID</label>
+                <label className="text-white small d-block">ORDER ID</label>
                 <span className="text-info fw-bold">{selectedOrder.id}</span>
               </div>
               <div className="mb-3">
-                <label className="text-secondary small d-block">CUSTOMER</label>
+                <label className="text-white small d-block">CUSTOMER</label>
                 <span className="fw-bold">{selectedOrder.customer_name || "Guest"}</span>
               </div>
               <div className="mb-3">
-                <label className="text-secondary small d-block">TOTAL AMOUNT</label>
+                <label className="text-white small d-block">TOTAL AMOUNT</label>
                 <span className="fw-bold text-success fs-4">${selectedOrder.total_amount}</span>
               </div>
               <div className="mb-3">
-                <label className="text-secondary small d-block">STATUS</label>
+                <label className="text-white small d-block">STATUS</label>
                 <Badge bg={selectedOrder.status === 'Delivered' ? 'success' : 'warning'} className="bg-opacity-25 text-capitalize">
                   {selectedOrder.status}
                 </Badge>

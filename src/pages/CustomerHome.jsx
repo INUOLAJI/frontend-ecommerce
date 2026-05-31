@@ -12,7 +12,6 @@ const CustomerHome = () => {
   
   const { addToCart, getCartCount } = useCart();
 
-  // 1. Fetch Products on Mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -26,16 +25,11 @@ const CustomerHome = () => {
     fetchProducts();
   }, []);
 
-  // 2. Combined Logic for Search + Category Filtering
   useEffect(() => {
     let tempProducts = [...products];
-
-    // Filter by Category
     if (selectedCategory !== 'All') {
       tempProducts = tempProducts.filter(p => p.category === selectedCategory);
     }
-
-    // Filter by Search Term
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
       tempProducts = tempProducts.filter(p => 
@@ -43,73 +37,61 @@ const CustomerHome = () => {
         p.category.toLowerCase().includes(term)
       );
     }
-
     setFilteredProducts(tempProducts);
   }, [selectedCategory, searchTerm, products]);
 
-  // Derive unique categories for the filter buttons
   const categories = ['All', ...new Set(products.map(p => p.category))];
 
   return (
     <div className="bg-dark text-white min-vh-100">
       {/* Navigation */}
       <Navbar bg="dark" variant="dark" expand="lg" className="border-bottom border-secondary py-3 sticky-top shadow">
-  <Container>
-    {/* 1. Brand stays left */}
-    <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-info">
-      PRO-SHOP
-    </Navbar.Brand>
-
-    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-
-    <Navbar.Collapse id="basic-navbar-nav">
-      {/* 2. Navigation Links (Home/Cart) - ms-auto pushes everything after this to the right */}
-      <Nav className="ms-auto align-items-center">
-        <Nav.Link as={Link} to="/" className="mx-2 text-white">
-          Home
-        </Nav.Link>
-        <Nav.Link className="mx-2 me-lg-4 position-relative" as={Link} to="/cart">
-          Cart 🛒
-          {getCartCount() > 0 && (
-            <Badge pill bg="info" className="ms-1 position-absolute top-0 start-100 translate-middle text-dark fw-bold">
-              {getCartCount()}
-            </Badge>
-          )}
-        </Nav.Link>
-      </Nav>
-
-      {/* 3. Search Bar - Sits nicely on the far right on desktop, stacks on mobile */}
-      <Form className="d-flex my-3 my-lg-0 ">
-        <InputGroup style={{ maxWidth: '250px' }}>
-          <Form.Control
-            type="search"
-            placeholder="Search gadgets..."
-            className="bg-secondary bg-opacity-10 border-secondary text-white shadow-none"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button variant="outline-info" className="border-secondary">
-            🔍
-          </Button>
-        </InputGroup>
-      </Form>
-    </Navbar.Collapse>
-  </Container>
-</Navbar>
+        <Container>
+          <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-info">
+            MARVELOUS-STORE
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="ms-auto align-items-center">
+              <Nav.Link as={Link} to="/" className="me-auto me-lg-0 ms-lg-auto align-items-center text-white">Home</Nav.Link>
+              <Nav.Link className="me-auto me-lg-0 ms-lg-auto align-items-center text-white" as={Link} to="/cart">
+                Cart 🛒
+                {getCartCount() > 0 && (
+                  <Badge pill bg="info" className="ms-1 position-absolute top-0 start-100 translate-middle text-dark fw-bold">
+                    {getCartCount()}
+                  </Badge>
+                )}
+              </Nav.Link>
+            </Nav>
+            <Form className="d-flex my-3 my-lg-0">
+              <InputGroup style={{ maxWidth: '250px' }}>
+                <Form.Control
+                  type="search"
+                  placeholder="Search gadgets..."
+                  className="bg-secondary bg-opacity-10 border-secondary text-white shadow-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Button variant="outline-info" className="border-secondary">🔍</Button>
+              </InputGroup>
+            </Form>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
 
       {/* Hero Section */}
       <section className="py-5 text-center" style={{ background: 'linear-gradient(45deg, #0f172a 0%, #1e293b 100%)' }}>
         <Container className="py-5">
           <Badge bg="info" className="mb-3 px-3 py-2 text-dark fw-bold">NEW ARRIVALS 2026</Badge>
           <h1 className="display-4 fw-bold mb-3">Upgrade Your Digital Lifestyle</h1>
-          <p className="lead text-secondary">Premium curated gadgets for the modern pro.</p>
+          <p className="lead text-white">Premium curated gadgets for the modern pro.</p>
         </Container>
       </section>
 
       {/* Main Content */}
       <Container className="py-5">
         
-        {/* --- CATEGORY FILTERS --- */}
+        {/* Category Filters */}
         <div className="mb-5">
           <div className="d-flex flex-wrap gap-2 justify-content-center">
             {categories.map((cat) => (
@@ -139,18 +121,32 @@ const CustomerHome = () => {
             filteredProducts.map((product) => (
               <Col key={product.id} sm={6} md={4} lg={3}>
                 <Card className="bg-secondary bg-opacity-10 border-secondary h-100 hover-lift transition-all">
-                  <div className="bg-dark d-flex align-items-center justify-content-center" style={{ height: '180px' }}>
-                    <span className="display-4 opacity-25">📦</span>
+                  
+                  {/* ── PRODUCT IMAGE ── */}
+                  <div
+                    className="bg-dark d-flex align-items-center justify-content-center overflow-hidden"
+                    style={{ height: '180px' }}
+                  >
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <span className="display-4 opacity-25">📦</span>
+                    )}
                   </div>
+
                   <Card.Body className="d-flex flex-column">
                     <div className="d-flex justify-content-between align-items-start mb-2">
-                      <Badge bg="dark" className="border border-secondary text-secondary small">{product.category}</Badge>
-                      <span className="text-info fw-bold">${product.price}</span>
+                      <Badge bg="dark" className="border border-secondary text- small">{product.category}</Badge>
+                      <span className="text-white fw-bold">${product.price}</span>
                     </div>
                     <Card.Title className="text-white fw-bold fs-6 mb-3">{product.name}</Card.Title>
-                    <Button 
-                      variant="outline-info" 
-                      className="mt-auto w-100 fw-bold" 
+                    <Button
+                      variant="outline-info"
+                      className="mt-auto w-100 fw-bold"
                       onClick={() => addToCart(product)}
                     >
                       Add to Cart
@@ -161,17 +157,17 @@ const CustomerHome = () => {
             ))
           ) : (
             <Col xs={12} className="text-center py-5">
-               <h4 className="text-secondary opacity-50">No products match your search or filter.</h4>
-               <Button variant="link" className="text-info" onClick={() => {setSearchTerm(''); setSelectedCategory('All');}}>
-                 Clear all filters
-               </Button>
+              <h4 className="text-secondary opacity-50">No products match your search or filter.</h4>
+              <Button variant="link" className="text-info" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}>
+                Clear all filters
+              </Button>
             </Col>
           )}
         </Row>
       </Container>
 
       <footer className="py-5 border-top border-secondary mt-5 text-center">
-        <p className="text-secondary small mb-0">© 2026 PRO-SHOP. All rights reserved.</p>
+        <p className="text-white small mb-0">© 2026 PRO-SHOP. All rights reserved.</p>
       </footer>
     </div>
   );

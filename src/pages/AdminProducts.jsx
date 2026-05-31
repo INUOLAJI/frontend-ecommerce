@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Form, InputGroup, Badge, Spinner, Modal, Alert } from 'react-bootstrap';
+import { createClient } from '@supabase/supabase-js';
+
+// ── SINGLE SUPABASE INSTANCE (module-level singleton) ──────────────────────
+// Defined once here so it is never recreated on re-renders.
+// If you already have a src/lib/supabase.js file, delete these two lines
+// and import from there instead:  import { supabase } from '../lib/supabase';
+const SUPABASE_URL  = 'https://mtkecdfrvpbphdjciyht.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10a2VjZGZydnBicGhkamNpeWh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzY4MDAsImV4cCI6MjA5NDk1MjgwMH0.oQeiGQO8CFYs_Wh3Yr6FU23_vZkrRSV6fLtUL_yoh3k';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const AdminProducts = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All Categories");
-  const [alert, setAlert] = useState({ show: false, message: '', variant: '' });
+  const [products, setProducts]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [alert, setAlert]                 = useState({ show: false, message: '', variant: '' });
 
-  // Add Modal state
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', category: 'Electronics', price: '', stock: '' });
+  const [showAddModal, setShowAddModal]   = useState(false);
+  const [newProduct, setNewProduct]       = useState({ name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
 
-  // Edit Modal state
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editProduct, setEditProduct] = useState({ id: '', name: '', category: 'Electronics', price: '', stock: '' });
+  const [editProduct, setEditProduct]     = useState({ id: '', name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
 
-  // Delete Modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState({ id: '', name: '' });
-  const [deleting, setDeleting] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // ── Fetch products ──────────────────────────────
+  const [deleting, setDeleting]   = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  // ── FETCH PRODUCTS ─────────────────────────────────────────────────────────
   const fetchProducts = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/products');
       setProducts(res.data);
     } catch (err) {
-      console.error("Error loading products:", err);
+      console.error('Error loading products:', err);
       showAlertMsg('Failed to load products.', 'danger');
     } finally {
       setLoading(false);
@@ -43,63 +51,77 @@ const AdminProducts = () => {
     setTimeout(() => setAlert({ show: false, message: '', variant: '' }), 4000);
   };
 
-  // ── Add Product ─────────────────────────────────
+  // ── IMAGE UPLOAD ───────────────────────────────────────────────────────────
+  const handleImageUpload = async (e, mode) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Use timestamp + random string to guarantee a unique file name
+      const fileExt  = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,   // explicit MIME type avoids some 400s
+        });
+
+      if (uploadError) {
+        // Log the full error object so you can see the exact message
+        console.error('Supabase upload error:', JSON.stringify(uploadError));
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(uploadData.path);
+
+      if (mode === 'add') {
+        setNewProduct(prev  => ({ ...prev,  image_url: urlData.publicUrl }));
+      } else {
+        setEditProduct(prev => ({ ...prev, image_url: urlData.publicUrl }));
+      }
+    } catch (err) {
+      showAlertMsg('Upload failed: ' + err.message, 'danger');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ── ADD PRODUCT ────────────────────────────────────────────────────────────
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       await axios.post('http://localhost:5000/api/products', newProduct);
       setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Electronics', price: '', stock: '' });
+      setNewProduct({ name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
       fetchProducts();
       showAlertMsg('Product added successfully!', 'success');
     } catch (err) {
-      console.error("Error adding product:", err);
       showAlertMsg('Failed to add product.', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // ── Edit Product ────────────────────────────────
-  const handleOpenEdit = (product) => {
-    setEditProduct({
-      id:       product.id,
-      name:     product.name,
-      category: product.category,
-      price:    product.price,
-      stock:    product.stock
-    });
-    setShowEditModal(true);
-  };
-
+  // ── EDIT PRODUCT ───────────────────────────────────────────────────────────
   const handleEditProduct = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await axios.put(`http://localhost:5000/api/products/${editProduct.id}`, {
-        name:     editProduct.name,
-        category: editProduct.category,
-        price:    editProduct.price,
-        stock:    editProduct.stock
-      });
+      await axios.put(`http://localhost:5000/api/products/${editProduct.id}`, editProduct);
       setShowEditModal(false);
       fetchProducts();
       showAlertMsg('Product updated successfully!', 'success');
     } catch (err) {
-      console.error("Error updating product:", err);
       showAlertMsg('Failed to update product.', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // ── Delete Product ──────────────────────────────
-  const handleOpenDelete = (product) => {
-    setDeleteProduct({ id: product.id, name: product.name });
-    setShowDeleteModal(true);
-  };
-
+  // ── DELETE PRODUCT ─────────────────────────────────────────────────────────
   const handleDeleteProduct = async () => {
     setDeleting(true);
     try {
@@ -108,24 +130,21 @@ const AdminProducts = () => {
       fetchProducts();
       showAlertMsg('Product deleted successfully!', 'success');
     } catch (err) {
-      console.error("Error deleting product:", err);
       showAlertMsg('Failed to delete product.', 'danger');
-    } finally {
-      setDeleting(false);
-    }
+    } finally { setDeleting(false); }
   };
 
-  // ── Filter ──────────────────────────────────────
+  // ── HELPERS ────────────────────────────────────────────────────────────────
   const filteredProducts = products.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter;
+    const matchesSearch   = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   const getStatus = (stock) => {
-    if (stock === 0) return { label: "Out of Stock", color: "danger" };
-    if (stock < 10) return { label: "Low Stock", color: "warning" };
-    return { label: "In Stock", color: "success" };
+    if (stock === 0)  return { label: 'Out of Stock', color: 'danger' };
+    if (stock < 10)   return { label: 'Low Stock',    color: 'warning' };
+    return                   { label: 'In Stock',     color: 'success' };
   };
 
   if (loading) return (
@@ -134,17 +153,18 @@ const AdminProducts = () => {
     </div>
   );
 
+  // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <div className="bg-dark text-white min-vh-100 py-4">
       <Container className="content-fade-in">
 
-        {/* Alert */}
         {alert.show && (
           <Alert variant={alert.variant} dismissible onClose={() => setAlert({ show: false })}>
             {alert.message}
           </Alert>
         )}
 
+        {/* Header */}
         <header className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2 className="fw-bold text-info">Product Management</h2>
@@ -155,7 +175,7 @@ const AdminProducts = () => {
           </Button>
         </header>
 
-        {/* Search and Filter */}
+        {/* Filters */}
         <Card className="bg-secondary bg-opacity-10 border-secondary mb-4 p-3">
           <Row className="g-3">
             <Col md={8}>
@@ -178,6 +198,8 @@ const AdminProducts = () => {
                 <option>Electronics</option>
                 <option>Accessories</option>
                 <option>Furniture</option>
+                <option>Cake & Treats</option>
+                <option>Goods</option>
               </Form.Select>
             </Col>
           </Row>
@@ -196,69 +218,63 @@ const AdminProducts = () => {
           </div>
 
           <div className="admin-list">
-            {filteredProducts.map((item) => {
+            {filteredProducts.length === 0 ? (
+              <div className="text-center text-secondary py-5">No products found.</div>
+            ) : filteredProducts.map((item) => {
               const status = getStatus(item.stock);
               return (
                 <div key={item.id} className="p-3 border-bottom border-secondary">
                   <Row className="align-items-center g-3 g-md-0">
                     <Col xs={12} md={4}>
                       <div className="d-flex align-items-center">
-                        <div className="bg-info bg-opacity-10 rounded p-2 me-3 d-none d-sm-block">📦</div>
+                        <div
+                          className="bg-info bg-opacity-10 rounded border border-secondary p-1 me-3 d-none d-sm-flex align-items-center justify-content-center overflow-hidden"
+                          style={{ width: 45, height: 45, flexShrink: 0 }}
+                        >
+                          {item.image_url
+                            ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : <span>📦</span>}
+                        </div>
                         <div>
                           <div className="fw-bold text-white">{item.name}</div>
                           <div className="small text-info">{item.category}</div>
                         </div>
                       </div>
                     </Col>
-
                     <Col xs={4} md={2}>
                       <div className="small text-secondary d-md-none">Price</div>
                       <div className="fw-bold text-white">${item.price}</div>
                     </Col>
-
                     <Col xs={4} md={2}>
                       <div className="small text-secondary d-md-none">Stock</div>
                       <div className="text-white">{item.stock} <span className="d-md-none">units</span></div>
                     </Col>
-
                     <Col xs={4} md={2}>
                       <div className="small text-secondary d-md-none">Status</div>
                       <Badge bg={status.color}>{status.label}</Badge>
                     </Col>
-
-                    {/* ✅ Edit & Delete Buttons */}
                     <Col xs={12} md={2} className="text-md-end mt-3 mt-md-0">
                       <div className="d-flex gap-2 justify-content-md-end">
                         <Button
-                          variant="outline-light"
-                          size="sm"
+                          variant="outline-light" size="sm"
                           className="flex-grow-1 flex-md-grow-0 border-secondary"
-                          onClick={() => handleOpenEdit(item)}
-                        >
-                          Edit
-                        </Button>
+                          onClick={() => { setEditProduct(item); setShowEditModal(true); }}
+                        >Edit</Button>
                         <Button
-                          variant="outline-danger"
-                          size="sm"
+                          variant="outline-danger" size="sm"
                           className="flex-grow-1 flex-md-grow-0"
-                          onClick={() => handleOpenDelete(item)}
-                        >
-                          Delete
-                        </Button>
+                          onClick={() => { setDeleteProduct({ id: item.id, name: item.name }); setShowDeleteModal(true); }}
+                        >Delete</Button>
                       </div>
                     </Col>
                   </Row>
                 </div>
               );
             })}
-
-            {filteredProducts.length === 0 && (
-              <div className="p-5 text-center text-secondary">No products found.</div>
-            )}
           </div>
         </Card>
 
-        {/* ── ADD PRODUCT MODAL ── */}
+        {/* ── ADD MODAL ── */}
         <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered contentClassName="bg-dark text-white border-secondary">
           <Modal.Header closeButton closeVariant="white" className="border-secondary">
             <Modal.Title className="text-info">Add New Product</Modal.Title>
@@ -266,11 +282,24 @@ const AdminProducts = () => {
           <Modal.Body className="p-4">
             <Form onSubmit={handleAddProduct}>
               <Form.Group className="mb-3">
+                <Form.Label className="small text-secondary">Product Image</Form.Label>
+                <div className="d-flex align-items-center gap-2">
+                  <Form.Control
+                    type="file" accept="image/*"
+                    className="bg-dark border-secondary text-white"
+                    onChange={(e) => handleImageUpload(e, 'add')}
+                  />
+                  {newProduct.image_url && (
+                    <img src={newProduct.image_url} alt="" className="rounded" style={{ width: 40, height: 40, objectFit: 'cover' }} />
+                  )}
+                </div>
+                {uploading && <small className="text-info mt-1 d-block">Uploading…</small>}
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label className="small text-secondary">Product Name</Form.Label>
                 <Form.Control
-                  type="text" required
-                  placeholder="e.g. Wireless Mouse"
-                  className="bg-dark border-secondary text-white"
+                  type="text" required placeholder="e.g. Wireless Mouse"
+                  className="bg-dark border-secondary text-white shadow-none"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                 />
@@ -281,7 +310,7 @@ const AdminProducts = () => {
                     <Form.Label className="small text-secondary">Price ($)</Form.Label>
                     <Form.Control
                       type="number" required
-                      className="bg-dark border-secondary text-white"
+                      className="bg-dark border-secondary text-white shadow-none"
                       value={newProduct.price}
                       onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                     />
@@ -292,7 +321,7 @@ const AdminProducts = () => {
                     <Form.Label className="small text-secondary">Stock Amount</Form.Label>
                     <Form.Control
                       type="number" required
-                      className="bg-dark border-secondary text-white"
+                      className="bg-dark border-secondary text-white shadow-none"
                       value={newProduct.stock}
                       onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
                     />
@@ -302,23 +331,25 @@ const AdminProducts = () => {
               <Form.Group className="mb-4">
                 <Form.Label className="small text-secondary">Category</Form.Label>
                 <Form.Select
-                  className="bg-dark border-secondary text-white"
+                  className="bg-dark border-secondary text-white shadow-none"
                   value={newProduct.category}
                   onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                 >
                   <option>Electronics</option>
                   <option>Accessories</option>
                   <option>Furniture</option>
+                  <option>Cake & Treats</option>
+                  <option>Goods</option>
                 </Form.Select>
               </Form.Group>
-              <Button variant="info" type="submit" className="w-100 fw-bold py-2" disabled={saving}>
-                {saving ? <><Spinner size="sm" className="me-2" />Saving...</> : 'Save to Inventory'}
+              <Button variant="info" type="submit" className="w-100 fw-bold py-2" disabled={saving || uploading}>
+                {saving ? 'Saving…' : 'Save to Inventory'}
               </Button>
             </Form>
           </Modal.Body>
         </Modal>
 
-        {/* ── EDIT PRODUCT MODAL ── */}
+        {/* ── EDIT MODAL ── */}
         <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered contentClassName="bg-dark text-white border-secondary">
           <Modal.Header closeButton closeVariant="white" className="border-secondary">
             <Modal.Title className="text-warning">Edit Product</Modal.Title>
@@ -326,10 +357,24 @@ const AdminProducts = () => {
           <Modal.Body className="p-4">
             <Form onSubmit={handleEditProduct}>
               <Form.Group className="mb-3">
+                <Form.Label className="small text-secondary">Product Image</Form.Label>
+                <div className="d-flex align-items-center gap-2">
+                  <Form.Control
+                    type="file" accept="image/*"
+                    className="bg-dark border-secondary text-white"
+                    onChange={(e) => handleImageUpload(e, 'edit')}
+                  />
+                  {editProduct.image_url && (
+                    <img src={editProduct.image_url} alt="" className="rounded" style={{ width: 40, height: 40, objectFit: 'cover' }} />
+                  )}
+                </div>
+                {uploading && <small className="text-info mt-1 d-block">Uploading…</small>}
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label className="small text-secondary">Product Name</Form.Label>
                 <Form.Control
                   type="text" required
-                  className="bg-dark border-secondary text-white"
+                  className="bg-dark border-secondary text-white shadow-none"
                   value={editProduct.name}
                   onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
                 />
@@ -340,7 +385,7 @@ const AdminProducts = () => {
                     <Form.Label className="small text-secondary">Price ($)</Form.Label>
                     <Form.Control
                       type="number" required
-                      className="bg-dark border-secondary text-white"
+                      className="bg-dark border-secondary text-white shadow-none"
                       value={editProduct.price}
                       onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
                     />
@@ -351,7 +396,7 @@ const AdminProducts = () => {
                     <Form.Label className="small text-secondary">Stock Amount</Form.Label>
                     <Form.Control
                       type="number" required
-                      className="bg-dark border-secondary text-white"
+                      className="bg-dark border-secondary text-white shadow-none"
                       value={editProduct.stock}
                       onChange={(e) => setEditProduct({ ...editProduct, stock: e.target.value })}
                     />
@@ -361,23 +406,26 @@ const AdminProducts = () => {
               <Form.Group className="mb-4">
                 <Form.Label className="small text-secondary">Category</Form.Label>
                 <Form.Select
-                  className="bg-dark border-secondary text-white"
+                  className="bg-dark border-secondary text-white shadow-none"
                   value={editProduct.category}
                   onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}
                 >
                   <option>Electronics</option>
                   <option>Accessories</option>
                   <option>Furniture</option>
+                  <option>Cake & Treats</option>
+                  <option>Goods</option>
+
                 </Form.Select>
               </Form.Group>
-              <Button variant="warning" type="submit" className="w-100 fw-bold py-2" disabled={saving}>
-                {saving ? <><Spinner size="sm" className="me-2" />Updating...</> : 'Update Product'}
+              <Button variant="warning" type="submit" className="w-100 fw-bold py-2" disabled={saving || uploading}>
+                {saving ? 'Updating…' : 'Update Product'}
               </Button>
             </Form>
           </Modal.Body>
         </Modal>
 
-        {/* ── DELETE CONFIRM MODAL ── */}
+        {/* ── DELETE MODAL ── */}
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered contentClassName="bg-dark text-white border-secondary">
           <Modal.Header closeButton closeVariant="white" className="border-secondary">
             <Modal.Title className="text-danger">Delete Product</Modal.Title>
@@ -386,15 +434,14 @@ const AdminProducts = () => {
             <div style={{ fontSize: '3rem' }}>🗑️</div>
             <h5 className="mt-3">Are you sure?</h5>
             <p className="text-secondary">
-              You are about to delete <span className="text-white fw-bold">"{deleteProduct.name}"</span>. This action cannot be undone.
+              You are about to delete <span className="text-white fw-bold">"{deleteProduct.name}"</span>.
+              This action cannot be undone.
             </p>
           </Modal.Body>
           <Modal.Footer className="border-secondary">
-            <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
             <Button variant="danger" onClick={handleDeleteProduct} disabled={deleting}>
-              {deleting ? <><Spinner size="sm" className="me-2" />Deleting...</> : 'Yes, Delete'}
+              {deleting ? 'Deleting…' : 'Yes, Delete'}
             </Button>
           </Modal.Footer>
         </Modal>
