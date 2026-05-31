@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Form, InputGroup, Badge, Spinner, Modal, Alert } from 'react-bootstrap';
-import supabase from './lib/supabase';
+import supabase from '../lib/supabase';
 
 // ── SINGLE SUPABASE INSTANCE (module-level singleton) ──────────────────────
 // Defined once here so it is never recreated on re-renders.
