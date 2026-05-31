@@ -54,16 +54,24 @@ const CustomerHome = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto align-items-center">
               <Nav.Link as={Link} to="/" className="me-auto me-lg-0 ms-lg-auto align-items-center text-white">Home</Nav.Link>
-              <Nav.Link className="me-auto me-lg-0 ms-lg-auto align-items-center text-white" as={Link} to="/cart">
-                Cart 🛒
-                {getCartCount() > 0 && (
-                  <Badge pill bg="info" className="ms-1 position-absolute top-0 start-100 translate-middle text-dark fw-bold">
-                    {getCartCount()}
-                  </Badge>
-                )}
-              </Nav.Link>
+             <Nav.Link 
+  className="me-auto me-lg-0 ms-lg-auto align-items-center text-white position-relative" 
+  as={Link} 
+  to="/cart"
+>
+  Cart 🛒
+  {getCartCount() > 0 && (
+    <Badge 
+      pill 
+      bg="info" 
+      className="position-absolute top-0 start-100 translate-middle text-dark fw-bold"
+    >
+      {getCartCount()}
+    </Badge>
+  )}
+</Nav.Link>
             </Nav>
-            <Form className="d-flex my-3 my-lg-0">
+            <Form className="d-flex my-3 mx-3 my-lg-0">
               <InputGroup style={{ maxWidth: '250px' }}>
                 <Form.Control
                   type="search"
