@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Badge, Navbar, Nav, InputGroup, Form, Modal, Carousel, Accordion, ProgressBar } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -16,7 +16,7 @@ const CustomerHome = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showAllProducts, setShowAllProducts] = useState(false);
   
-  // ─── NEW STATE: SCREEN WIDTH DETECTION ───
+  // Screen Width Detection
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   // Interactive Quiz States
@@ -27,6 +27,9 @@ const CustomerHome = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 2, minutes: 14, seconds: 55 });
 
   const { addToCart, getCartCount } = useCart();
+
+  // ─── THE CATALOG REF FOR SCROLL TRACKING ───
+  const catalogRef = useRef(null);
 
   // Listen to screen size changes
   useEffect(() => {
@@ -82,6 +85,17 @@ const CustomerHome = () => {
     setShowAllProducts(false);
   }, [selectedCategory, searchTerm, products]);
 
+  // ─── OPTIMIZED EFFECT: TIMEOUT AUTO-SCROLL FIX FOR SEARCH ───
+  useEffect(() => {
+    if (searchTerm.trim() !== '' && catalogRef.current) {
+      const timer = setTimeout(() => {
+        catalogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm]);
+
   const categories = ['All', ...new Set(products.map(p => p.category))];
 
   const openQuickView = (product) => {
@@ -96,31 +110,61 @@ const CustomerHome = () => {
     }
     setFilteredProducts(temp);
     setShowAllProducts(false);
-    window.scrollTo({ top: 1250, behavior: 'smooth' });
+    if (catalogRef.current) {
+      catalogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
-  // ─── UPDATED VIEW LIMIT: 6 FOR MOBILE, 8 FOR DESKTOP ───
   const viewLimit = isMobile ? 6 : 8;
   const displayedProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, viewLimit);
 
   return (
     <div className={`${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'} min-vh-100 transition-all`}>
       
-      {/* ─── 1. NAVBAR WITH THEME TOGGLE ─── */}
+      {/* ─── 1. NAVBAR ─── */}
       <Navbar 
         bg={darkMode ? 'dark' : 'white'} 
         variant={darkMode ? 'dark' : 'light'} 
-        expand="lg" 
+        expand="md" 
         className={`border-bottom ${darkMode ? 'border-secondary' : 'border-light'} py-3 sticky-top shadow-sm`} 
         style={{ zIndex: 1030 }}
       >
-        <Container>
-          <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-info">
+        <Container className="d-flex flex-wrap align-items-center justify-content-between">
+          <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-info m-0">
             MARVELOUS-STORE
           </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto align-items-center">
+
+          {/* Mobile Cart View */}
+          <div className="d-flex d-md-none align-items-center gap-3">
+            <Nav.Link className={`fw-semibold position-relative p-1 ${darkMode ? 'text-white' : 'text-dark'}`} as={Link} to="/cart">
+              🛒
+              {getCartCount() > 0 && (
+                <Badge pill bg="info" className={`position-absolute top-0 start-100 translate-middle fw-bold ${darkMode ? 'text-dark' : 'text-white'}`} style={{ fontSize: '0.65rem' }}>
+                  {getCartCount()}
+                </Badge>
+              )}
+            </Nav.Link>
+            <span style={{ cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setDarkMode(!darkMode)}>
+              {darkMode ? '🌙' : '☀️'}
+            </span>
+          </div>
+
+          {/* Independent Mobile-Only Search Space */}
+          <div className="w-100 d-block d-md-none mt-3">
+            <InputGroup>
+              <Form.Control
+                type="search"
+                placeholder="Search gadgets..."
+                className={`shadow-none ${darkMode ? 'bg-secondary bg-opacity-10 border-secondary text-white' : 'bg-light border-light text-dark'}`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </InputGroup>
+          </div>
+
+          {/* Desktop/Tablet collapsible block */}
+          <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end align-items-center gap-3">
+            <Nav className="align-items-center">
               <Nav.Link as={Link} to="/" className={`mx-2 fw-semibold ${darkMode ? 'text-white' : 'text-dark'}`}>Home</Nav.Link>
               <Nav.Link className={`mx-2 fw-semibold position-relative ${darkMode ? 'text-white' : 'text-dark'}`} as={Link} to="/cart">
                 Cart 🛒
@@ -131,13 +175,12 @@ const CustomerHome = () => {
                 )}
               </Nav.Link>
 
-              {/* Toggler Switch */}
               <div className="mx-3 my-2 my-lg-0 d-flex align-items-center">
                 <span className="me-2">{darkMode ? '🌙' : '☀️'}</span>
                 <Form.Check type="switch" id="theme-switch" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="shadow-none" />
               </div>
             </Nav>
-            <Form className="d-flex my-3 my-lg-0">
+            <Form className="d-flex my-3 my-md-0">
               <InputGroup style={{ maxWidth: '250px' }}>
                 <Form.Control
                   type="search"
@@ -162,8 +205,8 @@ const CustomerHome = () => {
             <Container>
               <Badge bg="info" className={`mb-3 px-3 py-2 fw-bold ${darkMode ? 'text-dark' : 'text-white'}`}>EXCLUSIVE DEALS</Badge>
               <h1 className="display-4 fw-bold mb-2">Upgrade Your Digital Lifestyle</h1>
-              <p className="lead max-w-md mx-auto fw-medium text-secondary">Premium curated hardware and essentials tailored for the modern pro.</p>
-              <Button variant="info" className={`fw-bold px-4 py-2 mt-2 ${darkMode ? 'text-dark' : 'text-white'}`} onClick={() => window.scrollTo({top: 900, behavior: 'smooth'})}>Shop Offers</Button>
+              <p className={`lead max-w-md mx-auto fw-medium ${darkMode ? 'text-white-50' : 'text-secondary'}`}>Premium curated hardware and essentials tailored for the modern pro.</p>
+              <Button variant="info" className={`fw-bold px-4 py-2 mt-2 ${darkMode ? 'text-dark' : 'text-white'}`} onClick={() => catalogRef.current?.scrollIntoView({ behavior: 'smooth' })}>Shop Offers</Button>
             </Container>
           </div>
         </Carousel.Item>
@@ -175,8 +218,8 @@ const CustomerHome = () => {
             <Container>
               <Badge bg="success" className="mb-3 px-3 py-2 text-white fw-bold">JUST IN</Badge>
               <h1 className="display-4 fw-bold mb-2">Fresh Stock Collection</h1>
-              <p className="lead max-w-md mx-auto fw-medium text-secondary">Hand-tested elements and setups fresh on the counter.</p>
-              <Button variant="success" className="fw-bold text-white px-4 py-2 mt-2" onClick={() => window.scrollTo({top: 900, behavior: 'smooth'})}>Browse New Items</Button>
+              <p className={`lead max-w-md mx-auto fw-medium ${darkMode ? 'text-white-50' : 'text-secondary'}`}>Hand-tested elements and setups fresh on the counter.</p>
+              <Button variant="success" className="fw-bold text-white px-4 py-2 mt-2" onClick={() => catalogRef.current?.scrollIntoView({ behavior: 'smooth' })}>Browse New Items</Button>
             </Container>
           </div>
         </Carousel.Item>
@@ -185,9 +228,9 @@ const CustomerHome = () => {
       {/* ─── 3. VALUE PROPS GRID ─── */}
       <Container className="pt-5">
         <Row className="g-4 text-center">
-          <Col md={4}><div className="p-3"><h4>⚡ Fast Dispatch</h4><p className="text-muted small">Instant tracking coordinates dispatch.</p></div></Col>
-          <Col md={4}><div className="p-3"><h4>🛡️ Premium Quality</h4><p className="text-muted small">Every batch checked and evaluated.</p></div></Col>
-          <Col md={4}><div className="p-3"><h4>💬 24/7 Desk</h4><p className="text-muted small">Support handlers ready at any window.</p></div></Col>
+          <Col md={4}><div className="p-3"><h4>⚡ Fast Dispatch</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Instant tracking coordinates dispatch.</p></div></Col>
+          <Col md={4}><div className="p-3"><h4>🛡️ Premium Quality</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Every batch checked and evaluated.</p></div></Col>
+          <Col md={4}><div className="p-3"><h4>💬 24/7 Desk</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Support handlers ready at any window.</p></div></Col>
         </Row>
       </Container>
 
@@ -197,17 +240,17 @@ const CustomerHome = () => {
           <Row className="align-items-center g-3">
             <Col md={6}>
               <h3 className="fw-bold text-danger mb-1">⚡ Limited Flash Sale</h3>
-              <p className="text-muted mb-0 small">High-demand items tracking low stock metrics. Act fast!</p>
+              <p className={`mb-0 small ${darkMode ? 'text-white-50' : 'text-muted'}`}>High-demand items tracking low stock metrics. Act fast!</p>
             </Col>
             <Col md={6} className="text-md-end">
-              <span className="fw-bold me-2 small uppercase tracking-wider text-muted">Ends In:</span>
+              <span className={`fw-bold me-2 small uppercase tracking-wider ${darkMode ? 'text-white-50' : 'text-muted'}`}>Ends In:</span>
               <Badge bg="dark" className="p-2 font-monospace fs-6 text-danger me-1">{String(timeLeft.hours).padStart(2, '0')}h</Badge>
               <Badge bg="dark" className="p-2 font-monospace fs-6 text-danger me-1">{String(timeLeft.minutes).padStart(2, '0')}m</Badge>
               <Badge bg="dark" className="p-2 font-monospace fs-6 text-danger">{String(timeLeft.seconds).padStart(2, '0')}s</Badge>
             </Col>
           </Row>
           <div className="mt-3">
-            <small className="text-muted d-block mb-1">Total operational allocation claimed:</small>
+            <small className={`d-block mb-1 ${darkMode ? 'text-white-50' : 'text-muted'}`}>Total operational allocation claimed:</small>
             <ProgressBar now={78} variant="danger" label="78% Claimed" style={{ height: '20px' }} className="fw-bold" />
           </div>
         </Card>
@@ -217,14 +260,14 @@ const CustomerHome = () => {
       <Container className="my-5">
         <Card className={`p-4 border border-info border-opacity-25 rounded-3 ${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'}`}>
           <h4 className="fw-bold text-info mb-2">🔍 Smart Product Finder Quiz</h4>
-          <p className="text-muted small mb-4">Can't decide? Slide your budget parameters and let us map your collection coordinates instantly.</p>
+          <p className={`small mb-4 ${darkMode ? 'text-white-50' : 'text-muted'}`}>Can't decide? Slide your budget parameters and let us map your collection coordinates instantly.</p>
           <Row className="g-3">
             <Col sm={5}>
-              <Form.Label className="small fw-semibold text-muted">Max Budget Limit: <span className="text-info">${quizBudget}</span></Form.Label>
+              <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Max Budget Limit: <span className="text-info">${quizBudget}</span></Form.Label>
               <Form.Range min={10} max={2000} step={25} value={quizBudget} onChange={(e) => setQuizBudget(Number(e.target.value))} />
             </Col>
             <Col sm={4}>
-              <Form.Label className="small fw-semibold text-muted">Target Area</Form.Label>
+              <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Target Area</Form.Label>
               <Form.Select size="sm" className={darkMode ? 'bg-secondary text-white border-secondary' : ''} value={quizCategory} onChange={(e) => setQuizCategory(e.target.value)}>
                 <option value="All">Any Category</option>
                 {categories.filter(c => c !== 'All').map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -238,7 +281,7 @@ const CustomerHome = () => {
       </Container>
 
       {/* ─── 6. MAIN CATALOG BLOCK ─── */}
-      <Container className="py-4">
+      <Container className="py-4" ref={catalogRef} style={{ scrollMarginTop: '140px' }}>
         <div className="d-flex flex-wrap gap-2 justify-content-center mb-5">
           {categories.map((cat) => (
             <Button
@@ -255,7 +298,7 @@ const CustomerHome = () => {
         <div className="d-flex justify-content-between align-items-end mb-4">
           <div>
             <h2 className={`fw-bold mb-0 ${darkMode ? 'text-white' : 'text-dark'}`}>{selectedCategory === 'All' ? 'Our Catalog' : selectedCategory}</h2>
-            <p className="text-muted small">Showing {displayedProducts.length} of {filteredProducts.length} items</p>
+            <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Showing {displayedProducts.length} of {filteredProducts.length} items</p>
           </div>
         </div>
 
@@ -289,11 +332,11 @@ const CustomerHome = () => {
               );
             })
           ) : (
-            <Col xs={12} className="text-center py-5"><h5 className="text-muted">No items match current filter criteria.</h5></Col>
+            <Col xs={12} className="text-center py-5"><h5 className={`${darkMode ? 'text-white-50' : 'text-muted'}`}>No items match current filter criteria.</h5></Col>
           )}
         </Row>
 
-        {/* ─── EXPANSION TOGGLE BUTTON ─── */}
+        {/* EXPANSION TOGGLE BUTTON */}
         {filteredProducts.length > viewLimit && (
           <div className="text-center mt-5">
             <Button 
@@ -322,7 +365,7 @@ const CustomerHome = () => {
         </Carousel>
       </Container>
 
-      {/* ─── 8. TRANSPARENT FAQ ACCORDION SECTION ─── */}
+      {/* ─── 8. FAQ ACCORDION SECTION ─── */}
       <Container className="my-5 py-2">
         <h3 className="text-center fw-bold mb-4">💡 Frequently Asked Questions</h3>
         <Accordion className="shadow-sm">
@@ -366,7 +409,7 @@ const CustomerHome = () => {
                 <div>
                   <h4 className="fw-bold mb-1">{selectedProduct.name}</h4>
                   <Badge bg="secondary" className="mb-3 text-white">{selectedProduct.category}</Badge>
-                  <p className="text-muted small mb-3">Premium quality component entry curated specifically under rigorous system testing protocols.</p>
+                  <p className={`small mb-3 ${darkMode ? 'text-white-50' : 'text-muted'}`}>Premium quality component entry curated specifically under rigorous system testing protocols.</p>
                 </div>
                 <div>
                   <h3 className="text-info fw-bold mb-3">${selectedProduct.price}</h3>
