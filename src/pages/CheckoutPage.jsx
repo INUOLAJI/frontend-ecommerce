@@ -8,6 +8,9 @@ const CheckoutPage = () => {
   const { cart, getCartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   
+  // Theme Toggle State
+  const [darkMode, setDarkMode] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,132 +21,164 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  // 1. Prepare the Order Data for the Database
-  const orderData = {
-    customer_name: formData.name,
-    email: formData.email,
-    address: `${formData.address}, ${formData.city}, ${formData.zip}`,
-    total_amount: getCartTotal(),
-    items: cart,
-    status: 'Pending'
+    // 1. Prepare the Order Data for the Database
+    const orderData = {
+      customer_name: formData.name,
+      email: formData.email,
+      address: `${formData.address}, ${formData.city}, ${formData.zip}`,
+      total_amount: getCartTotal(),
+      items: cart,
+      status: 'Pending'
+    };
+
+    try {
+      // 2. Save to your Supabase Database first
+      await axios.post('https://backend-ecommerce-i0mn.onrender.com/api/orders', orderData);
+
+      // 3. Construct the WhatsApp Message
+      const phoneNumber = "2348165885581"; 
+      
+      let message = `*NEW ORDER - MARVELOUS-STORE*%0A%0A`;
+      message += `*Customer:* ${formData.name}%0A`;
+      message += `*Email:* ${formData.email}%0A`;
+      message += `*Address:* ${orderData.address}%0A%0A`;
+      message += `*Items:*%0A`;
+      
+      cart.forEach(item => {
+        message += `- ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}%0A`;
+      });
+      
+      message += `%0A*TOTAL AMOUNT: $${getCartTotal().toFixed(2)}*%0A%0A`;
+      message += `Please confirm my order!`;
+
+      // 4. Redirect to WhatsApp
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+      
+      alert("Order recorded! Redirecting to WhatsApp to complete payment...");
+      
+      clearCart();
+      window.location.href = whatsappUrl; 
+
+    } catch (err) {
+      setError("Failed to process order. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    // 2. Save to your Supabase Database first
-    await axios.post('https://backend-ecommerce-i0mn.onrender.com/api/orders', orderData);
-
-    // 3. Construct the WhatsApp Message
-    const phoneNumber = "1234567890"; // 👈 REPLACE WITH YOUR PHONE NUMBER (include country code, no + or 00)
-    
-    let message = `*NEW ORDER - MARVELOUS-STORE*%0A%0A`;
-    message += `*Customer:* ${formData.name}%0A`;
-    message += `*Email:* ${formData.email}%0A`;
-    message += `*Address:* ${orderData.address}%0A%0A`;
-    message += `*Items:*%0A`;
-    
-    cart.forEach(item => {
-      message += `- ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}%0A`;
-    });
-    
-    message += `%0A*TOTAL AMOUNT: $${getCartTotal().toFixed(2)}*%0A%0A`;
-    message += `Please confirm my order!`;
-
-    // 4. Redirect to WhatsApp
-    const whatsappUrl = `https://wa.me/${2348165885581}?text=${message}`;
-    
-    alert("Order recorded! Redirecting to WhatsApp to complete payment...");
-    
-    clearCart();
-    window.location.href = whatsappUrl; // This opens WhatsApp
-
-  } catch (err) {
-    setError("Failed to process order. Please try again.");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
-
   return (
-    <div className="bg-dark text-white min-vh-100 py-5">
+    <div className={`${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'} min-vh-100 py-5 transition-all`}>
       <Container>
-        <h2 className="fw-bold text-info mb-4 text-white">Checkout</h2>
+        {/* Header Space with Live Theme Controller */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="fw-bold m-0">Checkout</h2>
+          <div className="d-flex align-items-center bg-secondary bg-opacity-10 py-2 px-3 rounded-pill border">
+            <span className="me-2 small fw-semibold">{darkMode ? '🌙 Dark Mode' : '☀️ Light Mode'}</span>
+            <Form.Check 
+              type="switch" 
+              id="theme-switch" 
+              checked={darkMode} 
+              onChange={() => setDarkMode(!darkMode)} 
+              className="shadow-none m-0"
+            />
+          </div>
+        </div>
+
         <Row className="g-4">
           {/* Shipping Form */}
           <Col lg={7}>
-            <Card className="bg-secondary bg-opacity-10 border-secondary p-4">
-              <h5 className="mb-4 text-white">Shipping Information</h5>
-              {error && <Alert variant="danger">{error}</Alert>}
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3 text-white">
-                  <Form.Label>Full Name</Form.Label>
-                  <Form.Control 
-                    type="text" required className="bg-dark text-white border-secondary"
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3 text-white">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control 
-                    type="email" required className="bg-dark text-white border-secondary"
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3 text-white">
-                  <Form.Label>Address</Form.Label>
-                  <Form.Control 
-                    type="text" required className="bg-dark text-white border-secondary"
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  />
-                </Form.Group>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3 text-white">
-                      <Form.Label>City</Form.Label>
-                      <Form.Control 
-                        type="text" required className="bg-dark text-white border-secondary"
-                        onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3 text-white">
-                      <Form.Label>Zip Code</Form.Label>
-                      <Form.Control 
-                        type="text" required className="bg-dark text-white border-secondary"
-                        onChange={(e) => setFormData({...formData, zip: e.target.value})}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Button variant="info" type="submit" className="w-100 fw-bold mt-3 py-3" disabled={loading}>
-                  {loading ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
-                </Button>
-              </Form>
-            </Card>
-          </Col>
+  <Card className={`p-4 border ${darkMode ? 'bg-secondary bg-opacity-10 border-secondary' : 'bg-light border-light shadow-sm'}`}>
+    <h5 className={`mb-4 fw-bold ${darkMode ? 'text-white' : 'text-dark'}`}>Shipping Information</h5>
+    {error && <Alert variant="danger">{error}</Alert>}
+    
+    <Form onSubmit={handleSubmit}>
+      <Form.Group className="mb-3">
+        <Form.Label className={`fw-semibold small ${darkMode ? 'text-white' : 'text-dark'}`}>Full Name</Form.Label>
+        <Form.Control 
+          type="text" 
+          required 
+          className={`shadow-none ${darkMode ? 'bg-dark text-white border-secondary' : 'bg-white text-dark border-light'}`}
+          onChange={(e) => setFormData({...formData, name: e.target.value})}
+        />
+      </Form.Group>
 
+      <Form.Group className="mb-3">
+        <Form.Label className={`fw-semibold small ${darkMode ? 'text-white' : 'text-dark'}`}>Email</Form.Label>
+        <Form.Control 
+          type="email" 
+          required 
+          className={`shadow-none ${darkMode ? 'bg-dark text-white border-secondary' : 'bg-white text-dark border-light'}`}
+          onChange={(e) => setFormData({...formData, email: e.target.value})}
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label className={`fw-semibold small ${darkMode ? 'text-white' : 'text-dark'}`}>Address</Form.Label>
+        <Form.Control 
+          type="text" 
+          required 
+          className={`shadow-none ${darkMode ? 'bg-dark text-white border-secondary' : 'bg-white text-dark border-light'}`}
+          onChange={(e) => setFormData({...formData, address: e.target.value})}
+        />
+      </Form.Group>
+
+      <Row>
+        <Col md={6}>
+          <Form.Group className="mb-3">
+            <Form.Label className={`fw-semibold small ${darkMode ? 'text-white' : 'text-dark'}`}>City</Form.Label>
+            <Form.Control 
+              type="text" 
+              required 
+              className={`shadow-none ${darkMode ? 'bg-dark text-white border-secondary' : 'bg-white text-dark border-light'}`}
+              onChange={(e) => setFormData({...formData, city: e.target.value})}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={6}>
+          <Form.Group className="mb-3">
+            <Form.Label className={`fw-semibold small ${darkMode ? 'text-white' : 'text-dark'}`}>Zip Code</Form.Label>
+            <Form.Control 
+              type="text" 
+              required 
+              className={`shadow-none ${darkMode ? 'bg-dark text-white border-secondary' : 'bg-white text-dark border-light'}`}
+              onChange={(e) => setFormData({...formData, zip: e.target.value})}
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      <Button variant="info" type="submit" className={`w-100 fw-bold mt-3 py-3 ${!darkMode ? 'text-white' : 'text-dark'}`} disabled={loading}>
+        {loading ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
+      </Button>
+    </Form>
+  </Card>
+</Col>
           {/* Order Summary */}
           <Col lg={5}>
-            <Card className="bg-secondary bg-opacity-10 border-secondary">
-              <Card.Header className="bg-transparent border-secondary py-3">
-                <h5 className="mb-0 text-white">Order Summary</h5>
+            <Card className={`border ${darkMode ? 'bg-secondary bg-opacity-10 border-secondary' : 'bg-light border-light shadow-sm'}`}>
+              <Card.Header className={`bg-transparent py-3 ${darkMode ? 'border-secondary' : 'border-light'}`}>
+                <h5 className={`mb-0 fw-bold ${darkMode ? 'text-white' : 'text-dark'}`}>Order Summary</h5>
               </Card.Header>
               <ListGroup variant="flush">
                 {cart.map(item => (
-                  <ListGroup.Item key={item.id} className="bg-transparent text-white border-secondary d-flex justify-content-between">
+                  <ListGroup.Item 
+                    key={item.id} 
+                    className={`bg-transparent d-flex justify-content-between align-items-center py-3 ${darkMode ? 'text-white border-secondary' : 'text-dark border-light'}`}
+                  >
                     <div>
                       <div className="fw-bold">{item.name}</div>
-                      <small className="text-secondary">Qty: {item.quantity}</small>
+                      <small className={darkMode ? 'text-white-50' : 'text-muted'}>Qty: {item.quantity}</small>
                     </div>
-                    <span className="text-info">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="fw-bold text-info">${(item.price * item.quantity).toFixed(2)}</span>
                   </ListGroup.Item>
                 ))}
-                <ListGroup.Item className="bg-transparent text-white border-secondary pt-4">
+                
+                <ListGroup.Item className={`bg-transparent pt-4 pb-3 ${darkMode ? 'text-white border-secondary' : 'text-dark border-light'}`}>
                   <div className="d-flex justify-content-between fs-5 fw-bold">
                     <span>Total</span>
                     <span className="text-info">${getCartTotal().toFixed(2)}</span>
