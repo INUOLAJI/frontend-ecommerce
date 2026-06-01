@@ -66,60 +66,68 @@ const AdminDashboard = () => {
             ))}
           </Row>
 
-          <Card className="bg-secondary bg-opacity-10 border-secondary shadow-sm">
-            <Card.Header className="bg-transparent border-secondary py-3">
-              <h5 className="mb-0 text-white">Recent Orders</h5>
-            </Card.Header>
-            <Card.Body className="p-0 p-md-3">
-              <Table 
-                variant="dark" 
-                hover 
-                className="mb-0 align-middle" 
-                style={{ fontSize: 'calc(14px + (18 - 14) * ((100vw - 320px) / (1200 - 320)))' }}
-              >
-                <thead>
-                  <tr className="text-secondary border-secondary">
-                    <th className="ps-3">ID</th>
-                    <th>Customer</th>
-                    <th className="d-none d-md-table-cell">Status</th>
-                    <th>Amount</th>
-                    <th className="text-end pe-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recentOrders?.map((order) => (
-                    <tr key={order.id} className="border-secondary">
-                      <td className="ps-3 text-info fw-bold">{order.id}</td>
-                      <td className="text-truncate" style={{ maxWidth: '150px' }}>
-                        {order.customer_name || "Guest"}
-                      </td>
-                      <td className="d-none d-md-table-cell">
-                        <span className={`badge ${order.status === 'Delivered' || order.status === 'Paid' ? 'bg-success' : 'bg-warning'} bg-opacity-25 text-${order.status === 'Delivered' || order.status === 'Paid' ? 'success' : 'warning'} px-2`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="fw-bold">${order.total_amount}</td>
-                      <td className="text-end pe-3">
-                        <Button 
-                          variant="outline-info" 
-                          size="sm" 
-                          className="px-3"
-                          onClick={() => handleShow(order)}
-                        >
-                          Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.recentOrders.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="text-center py-4 text-secondary">No recent orders found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
+          <Card className="bg-secondary bg-opacity-10 border-secondary shadow-sm w-100 overflow-hidden">
+  <Card.Header className="bg-transparent border-secondary py-3 px-3 px-md-4">
+    <h5 className="mb-0 text-white fw-bold">Recent Orders</h5>
+  </Card.Header>
+  <Card.Body className="p-0">
+    {/* Explicit layout wrapper forces an elegant horizontal scrollbar on small screens instead of breaking the box */}
+    <div className="table-responsive w-100">
+      <Table 
+        responsive
+        variant="dark" 
+        hover 
+        className="mb-0 align-middle text-nowrap" 
+        style={{ fontSize: 'calc(13px + (16 - 13) * ((100vw - 320px) / (1200 - 320)))' }}
+      >
+        <thead>
+          <tr className="text-secondary border-secondary">
+            <th className="ps-3" style={{ width: '70px' }}>ID</th>
+            <th>Customer</th>
+            <th className="d-none d-md-table-cell">Status</th>
+            <th>Amount</th>
+            <th className="text-end pe-3">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.recentOrders?.map((order) => (
+            <tr key={order.id} className="border-secondary">
+              {/* Sliced long hash tracking strings for small screens */}
+              <td className="ps-3 text-info fw-bold">
+                <span className="d-md-none">#{String(order.id).slice(-4)}</span>
+                <span className="d-none d-md-inline">{order.id}</span>
+              </td>
+              <td className="text-truncate" style={{ maxWidth: '100px' }}>
+                {order.customer_name || "Guest"}
+              </td>
+              <td className="d-none d-md-table-cell">
+                <span className={`badge ${order.status === 'Delivered' || order.status === 'Paid' ? 'bg-success' : 'bg-warning'} bg-opacity-25 text-${order.status === 'Delivered' || order.status === 'Paid' ? 'success' : 'warning'} px-2`}>
+                  {order.status}
+                </span>
+              </td>
+              <td className="fw-bold">${order.total_amount}</td>
+              <td className="text-end pe-3">
+                <Button 
+                  variant="outline-info" 
+                  size="sm" 
+                  className="px-2 py-1 small"
+                  onClick={() => handleShow(order)}
+                >
+                  Details
+                </Button>
+              </td>
+            </tr>
+          ))}
+          {(!data.recentOrders || data.recentOrders.length === 0) && (
+            <tr>
+              <td colSpan="5" className="text-center py-4 text-secondary">No recent orders found.</td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+    </div>
+  </Card.Body>
+</Card>
         </Col>
       </Row>
 
