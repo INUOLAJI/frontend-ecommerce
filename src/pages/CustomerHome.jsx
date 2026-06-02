@@ -31,6 +31,9 @@ const CustomerHome = () => {
   // ─── THE CATALOG REF FOR SCROLL TRACKING ───
   const catalogRef = useRef(null);
 
+  // Hardcoded premium gadget categories for e-commerce filtering alignment
+  const gadgetFilters = ['All', 'Audio Gear', 'Computers', 'Smart Tech', 'Gaming'];
+
   // Listen to screen size changes
   useEffect(() => {
     const handleResize = () => {
@@ -95,8 +98,6 @@ const CustomerHome = () => {
       return () => clearTimeout(timer);
     }
   }, [searchTerm]);
-
-  const categories = ['All', ...new Set(products.map(p => p.category))];
 
   const openQuickView = (product) => {
     setSelectedProduct(product);
@@ -266,11 +267,12 @@ const CustomerHome = () => {
               <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Max Budget Limit: <span className="text-info">${quizBudget}</span></Form.Label>
               <Form.Range min={10} max={2000} step={25} value={quizBudget} onChange={(e) => setQuizBudget(Number(e.target.value))} />
             </Col>
-            <Col sm={4}>
-              <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Target Area</Form.Label>
+           {/* Category Selection mapped with targeted clean gadget tags */}
+          <Col sm={4}>
+            <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Target Area</Form.Label>
               <Form.Select size="sm" className={darkMode ? 'bg-secondary text-white border-secondary' : ''} value={quizCategory} onChange={(e) => setQuizCategory(e.target.value)}>
                 <option value="All">Any Category</option>
-                {categories.filter(c => c !== 'All').map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                {gadgetFilters.filter(c => c !== 'All').map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </Form.Select>
             </Col>
             <Col sm={3} className="d-flex align-items-end">
@@ -282,15 +284,17 @@ const CustomerHome = () => {
 
       {/* ─── 6. MAIN CATALOG BLOCK ─── */}
       <Container className="py-4" ref={catalogRef} style={{ scrollMarginTop: '140px' }}>
+        
+        {/* Dynamic Category Row swapped out with explicit Gadget filtering arrays */}
         <div className="d-flex flex-wrap gap-2 justify-content-center mb-5">
-          {categories.map((cat) => (
+          {gadgetFilters.map((cat) => (
             <Button
               key={cat}
               variant={selectedCategory === cat ? "info" : "outline-secondary"}
               className={`rounded-pill px-4 transition-all ${selectedCategory === cat ? (darkMode ? 'text-dark fw-bold' : 'text-white fw-bold') : ''}`}
               onClick={() => setSelectedCategory(cat)}
             >
-              {cat}
+              {cat === 'All' ? '🌐 All Gadgets' : cat}
             </Button>
           ))}
         </div>

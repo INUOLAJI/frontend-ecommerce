@@ -3,12 +3,6 @@ import axios from 'axios';
 import { Container, Row, Col, Card, Button, Form, InputGroup, Badge, Spinner, Modal, Alert } from 'react-bootstrap';
 import supabase from '../lib/supabase';
 
-// ── SINGLE SUPABASE INSTANCE (module-level singleton) ──────────────────────
-// Defined once here so it is never recreated on re-renders.
-// If you already have a src/lib/supabase.js file, delete these two lines
-// and import from there instead:  import { supabase } from '../lib/supabase';
-
-
 const AdminProducts = () => {
   const [products, setProducts]           = useState([]);
   const [loading, setLoading]             = useState(true);
@@ -16,11 +10,12 @@ const AdminProducts = () => {
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [alert, setAlert]                 = useState({ show: false, message: '', variant: '' });
 
+  // Updated default category state to 'Audio Gear'
   const [showAddModal, setShowAddModal]   = useState(false);
-  const [newProduct, setNewProduct]       = useState({ name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
+  const [newProduct, setNewProduct]       = useState({ name: '', category: 'Audio Gear', price: '', stock: '', image_url: '' });
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editProduct, setEditProduct]     = useState({ id: '', name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
+  const [editProduct, setEditProduct]     = useState({ id: '', name: '', category: 'Audio Gear', price: '', stock: '', image_url: '' });
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState({ id: '', name: '' });
@@ -56,7 +51,6 @@ const AdminProducts = () => {
 
     setUploading(true);
     try {
-      // Use timestamp + random string to guarantee a unique file name
       const fileExt  = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
 
@@ -65,11 +59,10 @@ const AdminProducts = () => {
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type,   // explicit MIME type avoids some 400s
+          contentType: file.type,
         });
 
       if (uploadError) {
-        // Log the full error object so you can see the exact message
         console.error('Supabase upload error:', JSON.stringify(uploadError));
         throw uploadError;
       }
@@ -97,7 +90,7 @@ const AdminProducts = () => {
     try {
       await axios.post('https://backend-ecommerce-i0mn.onrender.com/api/products', newProduct);
       setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Electronics', price: '', stock: '', image_url: '' });
+      setNewProduct({ name: '', category: 'Audio Gear', price: '', stock: '', image_url: '' });
       fetchProducts();
       showAlertMsg('Product added successfully!', 'success');
     } catch (err) {
@@ -190,14 +183,14 @@ const AdminProducts = () => {
             <Col md={4}>
               <Form.Select
                 className="bg-dark border-secondary text-white"
+                value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
               >
                 <option>All Categories</option>
-                <option>Electronics</option>
-                <option>Accessories</option>
-                <option>Furniture</option>
-                <option>Cake & Treats</option>
-                <option>Goods</option>
+                <option>Audio Gear</option>
+                <option>Computers</option>
+                <option>Smart Tech</option>
+                <option>Gaming</option>
               </Form.Select>
             </Col>
           </Row>
@@ -333,11 +326,10 @@ const AdminProducts = () => {
                   value={newProduct.category}
                   onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                 >
-                  <option>Electronics</option>
-                  <option>Accessories</option>
-                  <option>Furniture</option>
-                  <option>Cake & Treats</option>
-                  <option>Goods</option>
+                  <option>Audio Gear</option>
+                  <option>Computers</option>
+                  <option>Smart Tech</option>
+                  <option>Gaming</option>
                 </Form.Select>
               </Form.Group>
               <Button variant="info" type="submit" className="w-100 fw-bold py-2" disabled={saving || uploading}>
@@ -408,12 +400,10 @@ const AdminProducts = () => {
                   value={editProduct.category}
                   onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}
                 >
-                  <option>Electronics</option>
-                  <option>Accessories</option>
-                  <option>Furniture</option>
-                  <option>Cake & Treats</option>
-                  <option>Goods</option>
-
+                  <option>Audio Gear</option>
+                  <option>Computers</option>
+                  <option>Smart Tech</option>
+                  <option>Gaming</option>
                 </Form.Select>
               </Form.Group>
               <Button variant="warning" type="submit" className="w-100 fw-bold py-2" disabled={saving || uploading}>
