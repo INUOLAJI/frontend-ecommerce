@@ -3,6 +3,10 @@ import axios from 'axios';
 import { Container, Row, Col, Card, Button, Badge, Navbar, Nav, InputGroup, Form, Modal, Carousel, Accordion, ProgressBar } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { FiSun, FiMoon, FiShoppingCart } from 'react-icons/fi';
+import { BsLightning } from 'react-icons/bs';
+import { ShieldCheck, MessageCircle, Search, Globe, Sparkles, HelpCircle } from 'lucide-react'; 
+
 
 const CustomerHome = () => {
   const [products, setProducts] = useState([]);
@@ -138,7 +142,7 @@ const CustomerHome = () => {
           {/* Mobile Cart View */}
           <div className="d-flex d-md-none align-items-center gap-3">
             <Nav.Link className={`fw-semibold position-relative p-1 ${darkMode ? 'text-white' : 'text-dark'}`} as={Link} to="/cart">
-              🛒
+              <FiShoppingCart className="ms-1" />
               {getCartCount() > 0 && (
                 <Badge pill bg="info" className={`position-absolute top-0 start-100 translate-middle fw-bold ${darkMode ? 'text-dark' : 'text-white'}`} style={{ fontSize: '0.65rem' }}>
                   {getCartCount()}
@@ -146,7 +150,7 @@ const CustomerHome = () => {
               )}
             </Nav.Link>
             <span style={{ cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setDarkMode(!darkMode)}>
-              {darkMode ? '🌙' : '☀️'}
+              {darkMode ? <FiMoon /> : <FiSun />}
             </span>
           </div>
 
@@ -168,7 +172,7 @@ const CustomerHome = () => {
             <Nav className="align-items-center">
               <Nav.Link as={Link} to="/" className={`mx-2 fw-semibold ${darkMode ? 'text-white' : 'text-dark'}`}>Home</Nav.Link>
               <Nav.Link className={`mx-2 fw-semibold position-relative ${darkMode ? 'text-white' : 'text-dark'}`} as={Link} to="/cart">
-                Cart 🛒
+                Cart <FiShoppingCart className="ms-1" />
                 {getCartCount() > 0 && (
                   <Badge pill bg="info" className={`position-absolute top-0 start-100 translate-middle fw-bold ${darkMode ? 'text-dark' : 'text-white'}`}>
                     {getCartCount()}
@@ -177,7 +181,7 @@ const CustomerHome = () => {
               </Nav.Link>
 
               <div className="mx-3 my-2 my-lg-0 d-flex align-items-center">
-                <span className="me-2">{darkMode ? '🌙' : '☀️'}</span>
+                <span className="me-2">{darkMode ? <FiMoon /> : <FiSun />}</span>
                 <Form.Check type="switch" id="theme-switch" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="shadow-none" />
               </div>
             </Nav>
@@ -228,19 +232,36 @@ const CustomerHome = () => {
 
       {/* ─── 3. VALUE PROPS GRID ─── */}
       <Container className="pt-5">
-        <Row className="g-4 text-center">
-          <Col md={4}><div className="p-3"><h4>⚡ Fast Dispatch</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Instant tracking coordinates dispatch.</p></div></Col>
-          <Col md={4}><div className="p-3"><h4>🛡️ Premium Quality</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Every batch checked and evaluated.</p></div></Col>
-          <Col md={4}><div className="p-3"><h4>💬 24/7 Desk</h4><p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Support handlers ready at any window.</p></div></Col>
-        </Row>
-      </Container>
+  <Row className="g-4 text-center">
+    <Col md={4}>
+      <div className="p-3">
+        <h4><BsLightning className="text-warning me-2" /> Fast Dispatch</h4>
+        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Instant tracking coordinates dispatch.</p>
+      </div>
+    </Col>
+    <Col md={4}>
+      <div className="p-3">
+        <h4><ShieldCheck className="text-success me-2" size={22} /> Premium Quality</h4>
+        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Every batch checked and evaluated.</p>
+      </div>
+    </Col>
+    <Col md={4}>
+      <div className="p-3">
+        <h4><MessageCircle className="text-primary me-2" size={22} /> 24/7 Desk</h4>
+        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Support handlers ready at any window.</p>
+      </div>
+    </Col>
+  </Row>
+</Container>
 
       {/* ─── 4. FLASH SALE & URGENCY COUNTER ─── */}
       <Container className="my-5">
         <Card className={`p-4 border-0 rounded-3 shadow-sm ${darkMode ? 'bg-secondary bg-opacity-10 text-white' : 'bg-light text-dark'}`}>
           <Row className="align-items-center g-3">
             <Col md={6}>
-              <h3 className="fw-bold text-danger mb-1">⚡ Limited Flash Sale</h3>
+              <h3 className="fw-bold text-danger mb-1">
+               <BsLightning className="me-2" /> Limited Flash Sale
+              </h3>
               <p className={`mb-0 small ${darkMode ? 'text-white-50' : 'text-muted'}`}>High-demand items tracking low stock metrics. Act fast!</p>
             </Col>
             <Col md={6} className="text-md-end">
@@ -260,7 +281,9 @@ const CustomerHome = () => {
       {/* ─── 5. INTERACTIVE FINDER QUIZ WIDGET ─── */}
       <Container className="my-5">
         <Card className={`p-4 border border-info border-opacity-25 rounded-3 ${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'}`}>
-          <h4 className="fw-bold text-info mb-2">🔍 Smart Product Finder Quiz</h4>
+          <h4 className="fw-bold text-info mb-2">
+           <Search className="me-2" size={20} /> Smart Product Finder Quiz
+          </h4>
           <p className={`small mb-4 ${darkMode ? 'text-white-50' : 'text-muted'}`}>Can't decide? Slide your budget parameters and let us map your collection coordinates instantly.</p>
           <Row className="g-3">
             <Col sm={5}>
@@ -294,7 +317,9 @@ const CustomerHome = () => {
               className={`rounded-pill px-4 transition-all ${selectedCategory === cat ? (darkMode ? 'text-dark fw-bold' : 'text-white fw-bold') : ''}`}
               onClick={() => setSelectedCategory(cat)}
             >
-              {cat === 'All' ? '🌐 All Gadgets' : cat}
+              {cat === 'All' ? (
+              <span><Globe className="me-1" size={18} /> All Gadgets</span>
+              ) : (cat)}
             </Button>
           ))}
         </div>
@@ -356,7 +381,9 @@ const CustomerHome = () => {
 
       {/* ─── 7. CUSTOMER REVIEWS SLIDER ─── */}
       <Container className="my-5 py-4">
-        <h3 className="text-center fw-bold mb-4">✨ Loving Customer Experiences</h3>
+        <h3 className="text-center fw-bold mb-4">
+          <Sparkles className="text-warning me-2" size={24} /> Loving Customer Experiences
+        </h3>
         <Carousel indicators={false} controls={true} className={`p-4 rounded shadow-sm text-center ${darkMode ? 'bg-secondary bg-opacity-10' : 'bg-light'}`}>
           <Carousel.Item>
             <p className="fst-italic lead">"The item arrived within two days! Incredible design attention and build stability parameters are strict."</p>
@@ -371,7 +398,9 @@ const CustomerHome = () => {
 
       {/* ─── 8. FAQ ACCORDION SECTION ─── */}
       <Container className="my-5 py-2">
-        <h3 className="text-center fw-bold mb-4">💡 Frequently Asked Questions</h3>
+        <h3 className="text-center fw-bold mb-4">
+         <HelpCircle className="text-primary me-2" size={24} /> Frequently Asked Questions
+        </h3>
         <Accordion className="shadow-sm">
           <Accordion.Item eventKey="0">
             <Accordion.Header>What are your shipment times and dispatch frames?</Accordion.Header>
