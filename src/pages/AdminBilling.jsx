@@ -67,7 +67,7 @@ const AdminBilling = () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(24);
     doc.setTextColor(255, 255, 255);
-    doc.text("PRO-SHOP", 14, 18);
+    doc.text("MARVELOUS-STORE", 14, 18);
 
     doc.setFontSize(10);
     doc.text("Modern Retail Receipt", 14, 25);
@@ -213,8 +213,8 @@ const AdminBilling = () => {
     doc.setFontSize(9);
     doc.setTextColor(120);
 
-    doc.text("Thank you for shopping with PRO-SHOP", 105, footerY + 7, { align: "center" });
-    doc.text("support@proshop.com | +234 800 123 4567", 105, footerY + 13, { align: "center" });
+    doc.text("Thank you for shopping with MARVELOUS-STORE", 105, footerY + 7, { align: "center" });
+    doc.text("support@marvelousstore.com | +234 816 588 5581", 105, footerY + 13, { align: "center" });
     doc.text("Please retain this receipt for returns and warranty claims.", 105, footerY + 19, { align: "center" });
 
     doc.save(`Receipt_${displayId}.pdf`);
