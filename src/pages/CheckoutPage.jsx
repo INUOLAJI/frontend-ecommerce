@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, ListGroup, Alert } from 'react-bootstrap';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom'; // Grouped clean router imports together
 
 const CheckoutPage = () => {
   const { cart, getCartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   
-  // Theme Toggle State
-  const [darkMode, setDarkMode] = useState(false);
+  // CHANGED: Removed local state assignment and connected with root theme context
+  const { darkMode } = useOutletContext();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -81,18 +81,13 @@ const CheckoutPage = () => {
   return (
     <div className={`${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'} min-vh-100 py-5 transition-all`}>
       <Container>
-        {/* Header Space with Theme Controller */}
+        {/* Header Space */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="fw-bold m-0">Checkout</h2>
-          <div className="d-flex align-items-center bg-secondary bg-opacity-10 py-2 px-3 rounded-pill border">
-            <span className="me-2 small fw-semibold">{darkMode ? '🌙 Dark Mode' : '☀️ Light Mode'}</span>
-            <Form.Check 
-              type="switch" 
-              id="theme-switch" 
-              checked={darkMode} 
-              onChange={() => setDarkMode(!darkMode)} 
-              className="shadow-none m-0"
-            />
+          {/* Note: The physical switch is removed here because changing the theme midway inside checkout is an anti-pattern. 
+              The application will automatically follow the active mode selected globally on the Home layout screen. */}
+          <div className="py-2 px-3 rounded-pill border bg-secondary bg-opacity-10">
+            <span className="small fw-semibold">{darkMode ? '🌙 Dark Mode Active' : '☀️ Light Mode Active'}</span>
           </div>
         </div>
 

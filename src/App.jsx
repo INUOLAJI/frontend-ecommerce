@@ -1,5 +1,4 @@
-// App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import AdminLayout from './components/AdminLayout';
@@ -17,6 +16,7 @@ import AdminSignup from './pages/AdminSignup';
 import AdminLogin from './pages/AdminLogin';
 import CheckoutPage from './pages/CheckoutPage';
 
+// --- PROTECTED ROUTE FOR ADMIN ---
 const ProtectedRoute = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,16 +34,46 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// --- CUSTOMER THEME WRAPPER ---
+// This isolates dark/light mode state and styling strictly to the customer routes
+const CustomerThemeLayout = () => {
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('customerDarkMode');
+    return saved ? JSON.parse(saved) : true; // Defaulting to true (dark mode)
+  });
+
+  useEffect(() => {
+    localStorage.setItem('customerDarkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  return (
+    <div 
+      data-bs-theme={darkMode ? 'dark' : 'light'} 
+      className={darkMode ? 'bg-dark text-white min-vh-100' : 'bg-light text-dark min-vh-100'}
+      style={{ transition: 'background-color 0.3s ease, color 0.3s ease' }}
+    >
+      {/* We use React Router's context prop to pass down the state variables.
+        Your Customer components can access them cleanly!
+      */}
+      <Outlet context={{ darkMode, setDarkMode }} />
+    </div>
+  );
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/" element={<CustomerHome />} />
-        <Route path="/cart" element={<CartPage />} />
+        {/* Isolated Customer Pages (Handles Theme Controls) */}
+        <Route element={<CustomerThemeLayout />}>
+          <Route path="/" element={<CustomerHome />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+        </Route>
+
+        {/* Public Admin Authentications (Independent Layout Styles) */}
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/create-admin-account-77" element={<AdminSignup />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
 
         {/* Redirect /admin → /admin/dashboard */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -57,7 +87,6 @@ function App() {
         <Route path="/admin/security" element={<ProtectedRoute><AdminLayout><AdminSecurity /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/notifications" element={<ProtectedRoute><AdminLayout><AdminNotifications /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/billing" element={<ProtectedRoute><AdminLayout><AdminBilling /></AdminLayout></ProtectedRoute>} />
-
 
         {/* 404 catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

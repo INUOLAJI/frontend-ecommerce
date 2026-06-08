@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Badge, Navbar, Nav, InputGroup, Form, Modal, Carousel, Accordion, ProgressBar } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom'; // Added useOutletContext
 import { useCart } from '../context/CartContext';
 import { FiSun, FiMoon, FiShoppingCart } from 'react-icons/fi';
 import { BsLightning } from 'react-icons/bs';
 import { ShieldCheck, MessageCircle, Search, Globe, Sparkles, HelpCircle } from 'lucide-react'; 
-
 
 const CustomerHome = () => {
   const [products, setProducts] = useState([]);
@@ -14,8 +13,9 @@ const CustomerHome = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // App States
-  const [darkMode, setDarkMode] = useState(false);
+  // CHANGED: Removed local useState and replaced with global theme context
+  const { darkMode, setDarkMode } = useOutletContext();
+  
   const [showQuickView, setShowQuickView] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -124,6 +124,8 @@ const CustomerHome = () => {
   const displayedProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, viewLimit);
 
   return (
+    // Note: The root background styles are handled by CustomerThemeLayout, 
+    // but keeping these local color utilities ensures components render correctly.
     <div className={`${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'} min-vh-100 transition-all`}>
       
       {/* ─── 1. NAVBAR ─── */}
@@ -232,27 +234,27 @@ const CustomerHome = () => {
 
       {/* ─── 3. VALUE PROPS GRID ─── */}
       <Container className="pt-5">
-  <Row className="g-4 text-center">
-    <Col md={4}>
-      <div className="p-3">
-        <h4><BsLightning className="text-warning me-2" /> Fast Dispatch</h4>
-        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Instant tracking coordinates dispatch.</p>
-      </div>
-    </Col>
-    <Col md={4}>
-      <div className="p-3">
-        <h4><ShieldCheck className="text-success me-2" size={22} /> Premium Quality</h4>
-        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Every batch checked and evaluated.</p>
-      </div>
-    </Col>
-    <Col md={4}>
-      <div className="p-3">
-        <h4><MessageCircle className="text-primary me-2" size={22} /> 24/7 Desk</h4>
-        <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Support handlers ready at any window.</p>
-      </div>
-    </Col>
-  </Row>
-</Container>
+        <Row className="g-4 text-center">
+          <Col md={4}>
+            <div className="p-3">
+              <h4><BsLightning className="text-warning me-2" /> Fast Dispatch</h4>
+              <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Instant tracking coordinates dispatch.</p>
+            </div>
+          </Col>
+          <Col md={4}>
+            <div className="p-3">
+              <h4><ShieldCheck className="text-success me-2" size={22} /> Premium Quality</h4>
+              <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Every batch checked and evaluated.</p>
+            </div>
+          </Col>
+          <Col md={4}>
+            <div className="p-3">
+              <h4><MessageCircle className="text-primary me-2" size={22} /> 24/7 Desk</h4>
+              <p className={`small ${darkMode ? 'text-white-50' : 'text-muted'}`}>Support handlers ready at any window.</p>
+            </div>
+          </Col>
+        </Row>
+      </Container>
 
       {/* ─── 4. FLASH SALE & URGENCY COUNTER ─── */}
       <Container className="my-5">
@@ -260,7 +262,7 @@ const CustomerHome = () => {
           <Row className="align-items-center g-3">
             <Col md={6}>
               <h3 className="fw-bold text-danger mb-1">
-               <BsLightning className="me-2" /> Limited Flash Sale
+                <BsLightning className="me-2" /> Limited Flash Sale
               </h3>
               <p className={`mb-0 small ${darkMode ? 'text-white-50' : 'text-muted'}`}>High-demand items tracking low stock metrics. Act fast!</p>
             </Col>
@@ -282,7 +284,7 @@ const CustomerHome = () => {
       <Container className="my-5">
         <Card className={`p-4 border border-info border-opacity-25 rounded-3 ${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'}`}>
           <h4 className="fw-bold text-info mb-2">
-           <Search className="me-2" size={20} /> Smart Product Finder Quiz
+            <Search className="me-2" size={20} /> Smart Product Finder Quiz
           </h4>
           <p className={`small mb-4 ${darkMode ? 'text-white-50' : 'text-muted'}`}>Can't decide? Slide your budget parameters and let us map your collection coordinates instantly.</p>
           <Row className="g-3">
@@ -290,9 +292,8 @@ const CustomerHome = () => {
               <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Max Budget Limit: <span className="text-info">${quizBudget}</span></Form.Label>
               <Form.Range min={10} max={2000} step={25} value={quizBudget} onChange={(e) => setQuizBudget(Number(e.target.value))} />
             </Col>
-           {/* Category Selection mapped with targeted clean gadget tags */}
-          <Col sm={4}>
-            <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Target Area</Form.Label>
+            <Col sm={4}>
+              <Form.Label className={`small fw-semibold ${darkMode ? 'text-white-50' : 'text-muted'}`}>Target Area</Form.Label>
               <Form.Select size="sm" className={darkMode ? 'bg-secondary text-white border-secondary' : ''} value={quizCategory} onChange={(e) => setQuizCategory(e.target.value)}>
                 <option value="All">Any Category</option>
                 {gadgetFilters.filter(c => c !== 'All').map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -307,8 +308,6 @@ const CustomerHome = () => {
 
       {/* ─── 6. MAIN CATALOG BLOCK ─── */}
       <Container className="py-4" ref={catalogRef} style={{ scrollMarginTop: '140px' }}>
-        
-        {/* Dynamic Category Row swapped out with explicit Gadget filtering arrays */}
         <div className="d-flex flex-wrap gap-2 justify-content-center mb-5">
           {gadgetFilters.map((cat) => (
             <Button
@@ -318,7 +317,7 @@ const CustomerHome = () => {
               onClick={() => setSelectedCategory(cat)}
             >
               {cat === 'All' ? (
-              <span><Globe className="me-1" size={18} /> All Gadgets</span>
+                <span><Globe className="me-1" size={18} /> All Gadgets</span>
               ) : (cat)}
             </Button>
           ))}
@@ -365,7 +364,6 @@ const CustomerHome = () => {
           )}
         </Row>
 
-        {/* EXPANSION TOGGLE BUTTON */}
         {filteredProducts.length > viewLimit && (
           <div className="text-center mt-5">
             <Button 
@@ -399,7 +397,7 @@ const CustomerHome = () => {
       {/* ─── 8. FAQ ACCORDION SECTION ─── */}
       <Container className="my-5 py-2">
         <h3 className="text-center fw-bold mb-4">
-         <HelpCircle className="text-primary me-2" size={24} /> Frequently Asked Questions
+          <HelpCircle className="text-primary me-2" size={24} /> Frequently Asked Questions
         </h3>
         <Accordion className="shadow-sm">
           <Accordion.Item eventKey="0">
@@ -417,7 +415,7 @@ const CustomerHome = () => {
         </Accordion>
       </Container>
 
-      {/* LAYERED SAFETY FIX: QUICK VIEW MODAL */}
+      {/* QUICK VIEW MODAL */}
       {showQuickView && selectedProduct && (
         <Modal 
           show={showQuickView} 
